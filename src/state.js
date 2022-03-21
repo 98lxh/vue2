@@ -1,3 +1,6 @@
+
+import { observe } from "./observer/index";
+
 export function initState(vm) {
   const opts = vm.$options;
   if (opts.props) {
@@ -20,7 +23,13 @@ export function initState(vm) {
 function initProps(vm) { }
 function initMethods(vm) { }
 function initData(vm) {
-  console.log(vm)
+  //数据初始化
+  let data = vm.$options.data;
+  data = vm._data = typeof data === 'function' ? data.call(vm) : data;
+  //对象劫持
+  //MVVM 数据驱动视图
+
+  observe(data);
 }
 function initComputed(vm) { }
 function initWatch(vm) { }
