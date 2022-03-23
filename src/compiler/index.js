@@ -1,14 +1,52 @@
+//将解析后的结果组合成ast树 -> stack
+function createAstElement(tagName, attrs) {
+  return {
+    tag: tagName,
+    type: 1,
+    children: [],
+    parent: null,
+    attrs
+  }
+}
+
+
+let root = null;
+const stack = [];
 function parserHTML(html) {
-  function start(tagName, attribute) {
-    console.log(tagName,'start')
+
+  function start(tagName, attributes) {
+    const parent = stack[stack.length - 1]
+    const element = createAstElement(tagName, attributes)
+    //设置根节点
+    if (!root) {
+      root = element
+    }
+    //放入栈中时 记录自己的父节点
+    element.parent = parent
+    //为这个父节点添加子节点为当前节点
+    if(parent){
+     parent.children.push(element)
+    }
+    stack.push(element)
   }
 
   function end(tagName) {
-    console.log(tagName,'end')
+    let last = stack.pop();
+    if(last.tag !== tagName){
+      //闭合标签有误
+      throw new Error('标签有误')
+    }
   }
 
   function chars(text) {
-    console.log(text,'chars')
+    text = text.replace(/\s/g," ");
+    let parent = stack[stack.length - 1]
+    if(text){
+      parent.children.push({
+        type:3,
+        text
+      })
+    }
   }
 
   function advance(len) {
@@ -28,7 +66,7 @@ function parserHTML(html) {
 
   function parserStartTag(html) {
     //不是开始标签
-    if(html.indexOf('</') === 0) return false
+    if (html.indexOf('</') === 0) return false
     const end = html.indexOf('>');
     //拿到标签内容
     const content = html.slice(1, end)
@@ -59,7 +97,7 @@ function parserHTML(html) {
     const end = html.indexOf('>')
     const tagStart = html.indexOf('/');
     const tagEnd = html.indexOf('>');
-    const tagName = html.slice(tagStart + 1,tagEnd);
+    const tagName = html.slice(tagStart + 1, tagEnd);
     advance(end + 1)
     return {
       tagName
@@ -74,7 +112,7 @@ function parserHTML(html) {
       //解析开始标签
       const startTagMatch = parserStartTag(html);
       if (startTagMatch) {
-        start(startTagMatch.tagName,start.attrs)
+        start(startTagMatch.tagName, start.attrs)
         continue;
       }
       const endTagMatch = parserEndTag(html);
@@ -86,17 +124,21 @@ function parserHTML(html) {
 
     //文本的处理
     let text;
-    if(textEnd > 0){
-      text = html.slice(0,textEnd);
+    if (textEnd > 0) {
+      text = html.slice(0, textEnd);
     }
 
-    if(text){
+    if (text) {
       chars(text)
       advance(text.length)
     }
   }
 }
+
+
 export function compileToFunction(template) {
 
   parserHTML(template)
+
+  console.log(root)
 }

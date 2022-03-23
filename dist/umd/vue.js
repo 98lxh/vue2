@@ -98,17 +98,58 @@
     throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
   }
 
+  //将解析后的结果组合成ast树 -> stack
+  function createAstElement(tagName, attrs) {
+    return {
+      tag: tagName,
+      type: 1,
+      children: [],
+      parent: null,
+      attrs: attrs
+    };
+  }
+
+  var root = null;
+  var stack = [];
+
   function parserHTML(html) {
-    function start(tagName, attribute) {
-      console.log(tagName, 'start');
+    function start(tagName, attributes) {
+      var parent = stack[stack.length - 1];
+      var element = createAstElement(tagName, attributes); //设置根节点
+
+      if (!root) {
+        root = element;
+      } //放入栈中时 记录自己的父节点
+
+
+      element.parent = parent; //为这个父节点添加子节点为当前节点
+
+      if (parent) {
+        parent.children.push(element);
+      }
+
+      stack.push(element);
     }
 
     function end(tagName) {
-      console.log(tagName, 'end');
+      var last = stack.pop();
+
+      if (last.tag !== tagName) {
+        //闭合标签有误
+        throw new Error('标签有误');
+      }
     }
 
     function chars(text) {
-      console.log(text, 'chars');
+      text = text.replace(/\s/g, " ");
+      var parent = stack[stack.length - 1];
+
+      if (text) {
+        parent.children.push({
+          type: 3,
+          text: text
+        });
+      }
     }
 
     function advance(len) {
@@ -184,7 +225,7 @@
         var startTagMatch = parserStartTag(html);
 
         if (startTagMatch) {
-          start(startTagMatch.tagName);
+          start(startTagMatch.tagName, start.attrs);
           continue;
         }
 
@@ -212,6 +253,7 @@
 
   function compileToFunction(template) {
     parserHTML(template);
+    console.log(root);
   }
 
   //判断是否为一个对象
