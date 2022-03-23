@@ -1,4 +1,5 @@
 
+import { compileToFunction } from "./compiler/index";
 import { initState } from "./state";
 
 //在原型添加一个init方法

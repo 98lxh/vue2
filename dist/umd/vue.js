@@ -39,6 +39,181 @@
     return Constructor;
   }
 
+  function _slicedToArray(arr, i) {
+    return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest();
+  }
+
+  function _arrayWithHoles(arr) {
+    if (Array.isArray(arr)) return arr;
+  }
+
+  function _iterableToArrayLimit(arr, i) {
+    var _i = arr == null ? null : typeof Symbol !== "undefined" && arr[Symbol.iterator] || arr["@@iterator"];
+
+    if (_i == null) return;
+    var _arr = [];
+    var _n = true;
+    var _d = false;
+
+    var _s, _e;
+
+    try {
+      for (_i = _i.call(arr); !(_n = (_s = _i.next()).done); _n = true) {
+        _arr.push(_s.value);
+
+        if (i && _arr.length === i) break;
+      }
+    } catch (err) {
+      _d = true;
+      _e = err;
+    } finally {
+      try {
+        if (!_n && _i["return"] != null) _i["return"]();
+      } finally {
+        if (_d) throw _e;
+      }
+    }
+
+    return _arr;
+  }
+
+  function _unsupportedIterableToArray(o, minLen) {
+    if (!o) return;
+    if (typeof o === "string") return _arrayLikeToArray(o, minLen);
+    var n = Object.prototype.toString.call(o).slice(8, -1);
+    if (n === "Object" && o.constructor) n = o.constructor.name;
+    if (n === "Map" || n === "Set") return Array.from(o);
+    if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen);
+  }
+
+  function _arrayLikeToArray(arr, len) {
+    if (len == null || len > arr.length) len = arr.length;
+
+    for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i];
+
+    return arr2;
+  }
+
+  function _nonIterableRest() {
+    throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+  }
+
+  function parserHTML(html) {
+    function start(tagName, attribute) {
+      console.log(tagName, 'start');
+    }
+
+    function end(tagName) {
+      console.log(tagName, 'end');
+    }
+
+    function chars(text) {
+      console.log(text, 'chars');
+    }
+
+    function advance(len) {
+      html = html.slice(len);
+    } //解析节点的属性
+
+
+    function parserAttrs(attrs) {
+      var attrMap = {};
+
+      for (var i = 0; i < attrs.length; i++) {
+        var attr = attrs[i];
+
+        var _attr$split = attr.split('='),
+            _attr$split2 = _slicedToArray(_attr$split, 2),
+            attrName = _attr$split2[0],
+            attrValue = _attr$split2[1];
+
+        attrMap[attrName] = attrValue;
+      }
+
+      return attrMap;
+    }
+
+    function parserStartTag(html) {
+      //不是开始标签
+      if (html.indexOf('</') === 0) return false;
+      var end = html.indexOf('>'); //拿到标签内容
+
+      var content = html.slice(1, end);
+      advance(end + 1); //拿到第一个空格的位置
+
+      var firstSpaceIdx = content.indexOf(' ');
+      var tagName = '',
+          attrStr = '';
+
+      if (firstSpaceIdx === -1) {
+        //没有找到空格，则将content作为标签
+        tagName = content;
+      } else {
+        //找到了空格则到第一个空格之前的是标签名
+        tagName = content.slice(0, firstSpaceIdx);
+        attrStr = content.slice(firstSpaceIdx + 1);
+      } //得到一个属性的数组
+
+
+      var attrArr = attrStr ? attrStr.split(' ') : []; //解析成一个属性对象
+
+      var attrs = parserAttrs(attrArr);
+      return {
+        tagName: tagName,
+        attrs: attrs
+      };
+    }
+
+    function parserEndTag(html) {
+      var end = html.indexOf('>');
+      var tagStart = html.indexOf('/');
+      var tagEnd = html.indexOf('>');
+      var tagName = html.slice(tagStart + 1, tagEnd);
+      advance(end + 1);
+      return {
+        tagName: tagName
+      };
+    } //解析的内容如果存在一直解析
+
+
+    while (html) {
+      var textEnd = html.indexOf('<'); //解析到开头
+
+      if (textEnd === 0) {
+        //解析开始标签
+        var startTagMatch = parserStartTag(html);
+
+        if (startTagMatch) {
+          start(startTagMatch.tagName);
+          continue;
+        }
+
+        var endTagMatch = parserEndTag(html);
+
+        if (endTagMatch) {
+          end(endTagMatch.tagName);
+          continue;
+        }
+      } //文本的处理
+
+
+      var text = void 0;
+
+      if (textEnd > 0) {
+        text = html.slice(0, textEnd);
+      }
+
+      if (text) {
+        chars(text);
+        advance(text.length);
+      }
+    }
+  }
+
+  function compileToFunction(template) {
+    parserHTML(template);
+  }
+
   //判断是否为一个对象
   function isObject(value) {
     return _typeof(value) === 'object' && value !== null;
