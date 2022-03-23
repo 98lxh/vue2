@@ -184,6 +184,29 @@
       vm.$options = options; //初始化状态
 
       initState(vm);
+
+      if (vm.$options.el) {
+        //数据挂载到模板 
+        vm.$mount(vm.$options.el);
+      }
+    };
+
+    Vue.prototype.$mount = function (el) {
+      var vm = this;
+      var options = vm.$options;
+      el = document.querySelector(el); //模板转换成渲染函数
+
+      if (!options.render) {
+        //没有render找template
+        var template = options.template;
+
+        if (!template && el) {
+          //没有template 取el的内容作为模板
+          template = el.outerHTML;
+          var render = compileToFunction(template);
+          options.render = render;
+        }
+      }
     };
   }
 
