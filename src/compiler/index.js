@@ -24,26 +24,26 @@ function parserHTML(html) {
     //放入栈中时 记录自己的父节点
     element.parent = parent
     //为这个父节点添加子节点为当前节点
-    if(parent){
-     parent.children.push(element)
+    if (parent) {
+      parent.children.push(element)
     }
     stack.push(element)
   }
 
   function end(tagName) {
     let last = stack.pop();
-    if(last.tag !== tagName){
+    if (last.tag !== tagName) {
       //闭合标签有误
       throw new Error('标签有误')
     }
   }
 
   function chars(text) {
-    text = text.replace(/\s/g," ");
+    text = text.replace(/\s/g, " ");
     let parent = stack[stack.length - 1]
-    if(text){
+    if (text) {
       parent.children.push({
-        type:3,
+        type: 3,
         text
       })
     }
@@ -133,12 +133,39 @@ function parserHTML(html) {
       advance(text.length)
     }
   }
+
+  return root
+}
+
+function genProps(attrs) {
+  let str = ''
+  for (let i = 0; i < attrs.length; i++) {
+    const attr = attrs[i];
+    if (attr.name === 'style') {
+      //属性是style转换成对象
+      let obj = {};
+      attr.value.split(';').forEach(item => {
+        let [key, value] = item.split(':')
+        obj[key] = value
+      })
+      attr.value = obj
+    }
+    str += `${attr.name}:${attr.value},`
+  }
+  return `{${str.slice(0, str.length - 2)}}`
+}
+
+function generate(el) {
+  let code = `_c("${el.tag}",${el.attrs && el.attrs.length ? genProps(el.attrs) : 'undefind'})`
+
+  return code
 }
 
 
 export function compileToFunction(template) {
 
-  parserHTML(template)
+  const root = parserHTML(template);
 
-  console.log(root)
+  let code = generate(root);
+  console.log(code)
 }

@@ -249,11 +249,47 @@
         advance(text.length);
       }
     }
+
+    return root;
+  }
+
+  function genProps(attrs) {
+    var str = '';
+
+    for (var i = 0; i < attrs.length; i++) {
+      var attr = attrs[i];
+
+      if (attr.name === 'style') {
+        (function () {
+          //属性是style转换成对象
+          var obj = {};
+          attr.value.split(';').forEach(function (item) {
+            var _item$split = item.split(':'),
+                _item$split2 = _slicedToArray(_item$split, 2),
+                key = _item$split2[0],
+                value = _item$split2[1];
+
+            obj[key] = value;
+          });
+          attr.value = obj;
+        })();
+      }
+
+      str += "".concat(attr.name, ":").concat(attr.value, ",");
+    }
+
+    return "{".concat(str.slice(0, str.length - 2), "}");
+  }
+
+  function generate(el) {
+    var code = "_c(\"".concat(el.tag, "\",").concat(el.attrs && el.attrs.length ? genProps(el.attrs) : 'undefind', ")");
+    return code;
   }
 
   function compileToFunction(template) {
-    parserHTML(template);
-    console.log(root);
+    var root = parserHTML(template);
+    var code = generate(root);
+    console.log(code);
   }
 
   //判断是否为一个对象
