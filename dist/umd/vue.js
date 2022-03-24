@@ -361,6 +361,17 @@
       configurable: false,
       value: value
     });
+  } //_data的值代理到实例上
+
+  function proxy(vm, source, key) {
+    Object.defineProperty(vm, key, {
+      get: function get() {
+        return vm[source][key];
+      },
+      set: function set(newValue) {
+        vm[source][key] = newValue;
+      }
+    });
   }
 
   var oldArrayMethods = Array.prototype;
@@ -477,17 +488,6 @@
     if (opts.computed) ;
 
     if (opts.watch) ;
-  } //_data的值代理到实例上
-
-  function proxy(vm, source, key) {
-    Object.defineProperty(vm, key, {
-      get: function get() {
-        return vm[source][key];
-      },
-      set: function set(newValue) {
-        vm[source][key] = newValue;
-      }
-    });
   }
 
   function initData(vm) {

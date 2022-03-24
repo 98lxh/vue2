@@ -1,5 +1,6 @@
 
 import { observe } from "./observer/index";
+import { proxy } from "./utils/index";
 
 export function initState(vm) {
   const opts = vm.$options;
@@ -20,17 +21,6 @@ export function initState(vm) {
   }
 }
 
-//_data的值代理到实例上
-function proxy(vm,source,key){
-  Object.defineProperty(vm,key,{
-    get(){
-      return vm[source][key]
-    },
-    set(newValue){
-      vm[source][key] = newValue
-    }
-  })
-}
 
 function initProps(vm) { }
 function initMethods(vm) { }
