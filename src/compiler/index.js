@@ -41,7 +41,7 @@ function parserHTML(html) {
   function chars(text) {
     text = text.replace(/\s/g, " ");
     let parent = stack[stack.length - 1]
-    if (text) {
+    if (text.trim()) {
       parent.children.push({
         type: 3,
         text
@@ -53,15 +53,25 @@ function parserHTML(html) {
     html = html.slice(len)
   }
 
-  //解析节点的属性
+  //解析节点属性生成节点属性的字符串
   function parserAttrs(attrs) {
-    const attrMap = {};
+    let attrStr = "";
     for (let i = 0; i < attrs.length; i++) {
       const attr = attrs[i];
-      const [attrName, attrValue] = attr.split('=')
-      attrMap[attrName] = attrValue
+      let [attrName,attrValue] = attr.split('=')
+      attrValue = attrValue.replace(/"/g,'')
+      if(attrName === 'style'){
+        let obj = {};
+        attrValue.split(';').forEach(item => {
+          let [key,value] = item.split(':')
+          if(key) obj[key] = value.replace(/\s+/g, "");
+        })
+        attrValue = obj
+      }
+      attrStr += `${attrName}:${JSON.stringify(attrValue)},`
     }
-    return attrMap
+
+    return `{${attrStr.slice(0,-1)}}`
   }
 
   function parserStartTag(html) {
@@ -83,10 +93,18 @@ function parserHTML(html) {
       attrStr = content.slice(firstSpaceIdx + 1)
     }
 
-    //得到一个属性的数组
-    const attrArr = attrStr ? attrStr.split(' ') : [];
-    //解析成一个属性对象
-    const attrs = parserAttrs(attrArr);
+    //处理style
+    const styleIdx = attrStr.indexOf('style')
+    let styleStr;
+    if(styleIdx !== -1){
+      styleStr = attrStr.slice(styleIdx,attrStr.length - 1)
+      attrStr = attrStr.slice(0,styleIdx)
+    }
+
+    const attrArr = attrStr ? attrStr.trim().split(' ') : [];
+    
+    //解析成一个属性字符串
+    const attrs = attrArr.length || styleStr ? parserAttrs([...attrArr,styleStr]) : 'undefined'
     return {
       tagName,
       attrs
@@ -112,7 +130,7 @@ function parserHTML(html) {
       //解析开始标签
       const startTagMatch = parserStartTag(html);
       if (startTagMatch) {
-        start(startTagMatch.tagName, start.attrs)
+        start(startTagMatch.tagName, startTagMatch.attrs)
         continue;
       }
       const endTagMatch = parserEndTag(html);
@@ -137,35 +155,52 @@ function parserHTML(html) {
   return root
 }
 
-function genProps(attrs) {
-  let str = ''
-  for (let i = 0; i < attrs.length; i++) {
-    const attr = attrs[i];
-    if (attr.name === 'style') {
-      //属性是style转换成对象
-      let obj = {};
-      attr.value.split(';').forEach(item => {
-        let [key, value] = item.split(':')
-        obj[key] = value
-      })
-      attr.value = obj
+function gen(node){
+  if(node.type === 1){
+    //元素节点
+    return generate(node)
+  }else{
+    //文本
+    let text = node.text;
+    const tokens = [];
+    while(text.trim()){
+      //文本的结束位置
+      const textEndIndex = text.indexOf("{{")
+      if(textEndIndex === 0){
+        //表达式的结束位置
+        const execEndIndex = text.indexOf("}}")
+        tokens.push(`_s(${text.slice(textEndIndex + 2,execEndIndex)})`)
+        text = text.slice(execEndIndex + 2)
+      }else{
+        tokens.push(JSON.stringify(text.slice(0,textEndIndex)))
+        text = text.slice(textEndIndex)
+      }
     }
-    str += `${attr.name}:${attr.value},`
+    return `_v(${tokens.join("+")})`
   }
-  return `{${str.slice(0, str.length - 2)}}`
+}
+
+function genChildren(el){
+  const children = el.children;
+  if(children && children.length > 0){
+    return `${children.map(c =>gen(c)).join(',')}`
+  }else{
+    return false
+  }
 }
 
 function generate(el) {
-  let code = `_c("${el.tag}",${el.attrs && el.attrs.length ? genProps(el.attrs) : 'undefind'})`
+  const children = genChildren(el);
+  let code = `_c("${el.tag}",${el.attrs})${
+    children ? `,${children}` : ''
+  }`
 
   return code
 }
 
 
 export function compileToFunction(template) {
-
   const root = parserHTML(template);
-
   let code = generate(root);
   console.log(code)
 }
