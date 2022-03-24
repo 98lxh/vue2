@@ -20,6 +20,18 @@ export function initState(vm) {
   }
 }
 
+//_data的值代理到实例上
+function proxy(vm,source,key){
+  Object.defineProperty(vm,key,{
+    get(){
+      return vm[source][key]
+    },
+    set(newValue){
+      vm[source][key] = newValue
+    }
+  })
+}
+
 function initProps(vm) { }
 function initMethods(vm) { }
 function initData(vm) {
@@ -28,6 +40,10 @@ function initData(vm) {
   data = vm._data = typeof data === 'function' ? data.call(vm) : data;
   //对象劫持
   //MVVM 数据驱动视图
+
+  for(let key in data){
+    proxy(vm,"_data",key)
+  }
 
   observe(data);
 }

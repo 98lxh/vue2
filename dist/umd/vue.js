@@ -477,6 +477,17 @@
     if (opts.computed) ;
 
     if (opts.watch) ;
+  } //_data的值代理到实例上
+
+  function proxy(vm, source, key) {
+    Object.defineProperty(vm, key, {
+      get: function get() {
+        return vm[source][key];
+      },
+      set: function set(newValue) {
+        vm[source][key] = newValue;
+      }
+    });
   }
 
   function initData(vm) {
@@ -484,6 +495,10 @@
     var data = vm.$options.data;
     data = vm._data = typeof data === 'function' ? data.call(vm) : data; //对象劫持
     //MVVM 数据驱动视图
+
+    for (var key in data) {
+      proxy(vm, "_data", key);
+    }
 
     observe(data);
   }
