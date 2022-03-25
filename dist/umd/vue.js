@@ -174,6 +174,9 @@
 
 
     function parserAttrs(attrs) {
+      attrs = attrs.filter(function (a) {
+        return a;
+      });
       var attrStr = "";
 
       for (var i = 0; i < attrs.length; i++) {
@@ -239,7 +242,7 @@
 
       var attrArr = attrStr ? attrStr.trim().split(' ') : []; //解析成一个属性字符串
 
-      var attrs = attrArr.length || styleStr ? parserAttrs([].concat(_toConsumableArray(attrArr), [styleStr])) : 'undefined';
+      var attrs = parserAttrs([].concat(_toConsumableArray(attrArr), [styleStr]));
       return {
         tagName: tagName,
         attrs: attrs
@@ -348,6 +351,7 @@
     var code = generate(root); //所有的模板引擎实现都需要new Function + with
 
     var renderFn = new Function("with(this){return ".concat(code, "}"));
+    console.log(code);
     return renderFn;
   }
 

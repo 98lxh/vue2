@@ -55,23 +55,24 @@ function parserHTML(html) {
 
   //解析节点属性生成节点属性的字符串
   function parserAttrs(attrs) {
+    attrs = attrs.filter(a => a)
     let attrStr = "";
     for (let i = 0; i < attrs.length; i++) {
       const attr = attrs[i];
-      let [attrName,attrValue] = attr.split('=')
-      attrValue = attrValue.replace(/"/g,'')
-      if(attrName === 'style'){
+      let [attrName, attrValue] = attr.split('=')
+      attrValue = attrValue.replace(/"/g, '')
+      if (attrName === 'style') {
         let obj = {};
         attrValue.split(';').forEach(item => {
-          let [key,value] = item.split(':')
-          if(key) obj[key] = value.replace(/\s+/g, "");
+          let [key, value] = item.split(':')
+          if (key) obj[key] = value.replace(/\s+/g, "");
         })
         attrValue = obj
       }
       attrStr += `${attrName}:${JSON.stringify(attrValue)},`
     }
 
-    return `{${attrStr.slice(0,-1)}}`
+    return `{${attrStr.slice(0, -1)}}`
   }
 
   function parserStartTag(html) {
@@ -96,15 +97,15 @@ function parserHTML(html) {
     //处理style
     const styleIdx = attrStr.indexOf('style')
     let styleStr;
-    if(styleIdx !== -1){
-      styleStr = attrStr.slice(styleIdx,attrStr.length - 1)
-      attrStr = attrStr.slice(0,styleIdx)
+    if (styleIdx !== -1) {
+      styleStr = attrStr.slice(styleIdx, attrStr.length - 1)
+      attrStr = attrStr.slice(0, styleIdx)
     }
 
     const attrArr = attrStr ? attrStr.trim().split(' ') : [];
-    
+
     //解析成一个属性字符串
-    const attrs = attrArr.length || styleStr ? parserAttrs([...attrArr,styleStr]) : 'undefined'
+    const attrs = parserAttrs([...attrArr, styleStr])
     return {
       tagName,
       attrs
@@ -155,24 +156,24 @@ function parserHTML(html) {
   return root
 }
 
-function gen(node){
-  if(node.type === 1){
+function gen(node) {
+  if (node.type === 1) {
     //元素节点
     return generate(node)
-  }else{
+  } else {
     //文本
     let text = node.text;
     const tokens = [];
-    while(text.trim()){
+    while (text.trim()) {
       //文本的结束位置
       const textEndIndex = text.indexOf("{{")
-      if(textEndIndex === 0){
+      if (textEndIndex === 0) {
         //表达式的结束位置
         const execEndIndex = text.indexOf("}}")
-        tokens.push(`_s(${text.slice(textEndIndex + 2,execEndIndex)})`)
+        tokens.push(`_s(${text.slice(textEndIndex + 2, execEndIndex)})`)
         text = text.slice(execEndIndex + 2)
-      }else{
-        tokens.push(JSON.stringify(text.slice(0,textEndIndex)))
+      } else {
+        tokens.push(JSON.stringify(text.slice(0, textEndIndex)))
         text = text.slice(textEndIndex)
       }
     }
@@ -180,20 +181,19 @@ function gen(node){
   }
 }
 
-function genChildren(el){
+function genChildren(el) {
   const children = el.children;
-  if(children && children.length > 0){
-    return `${children.map(c =>gen(c)).join(',')}`
-  }else{
+  if (children && children.length > 0) {
+    return `${children.map(c => gen(c)).join(',')}`
+  } else {
     return false
   }
 }
 
 function generate(el) {
   const children = genChildren(el);
-  let code = `_c("${el.tag}",${el.attrs})${
-    children ? `,${children}` : ''
-  }`
+  let code = `_c("${el.tag}",${el.attrs})${children ? `,${children}` : ''
+    }`
 
   return code
 }
@@ -207,5 +207,7 @@ export function compileToFunction(template) {
   let code = generate(root);
   //所有的模板引擎实现都需要new Function + with
   let renderFn = new Function(`with(this){return ${code}}`)
+
+  console.log(code)
   return renderFn
 }

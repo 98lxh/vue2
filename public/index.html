@@ -7,8 +7,8 @@
   <title>Document</title>
 </head>
 <body>
-  <div id="app" style="background-color: red;color:block">
-    <p>hello {{name}} - {{age}}</p>
+  <div id="app" style="background: fixed;">
+    <p style="color: red;">hello {{name}}</p>
   </div>
   <script src="/dist/umd/vue.js"></script>
   <script>
@@ -30,7 +30,7 @@
       watch(){}
     })
 
-    console.log(vm.arr)
+    // console.log(vm._data.arr)
   </script>
 </body>
 </html>
