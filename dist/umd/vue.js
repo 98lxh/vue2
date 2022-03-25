@@ -114,7 +114,9 @@
     throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
   }
 
-  //将解析后的结果组合成ast树 -> stack
+  var root = null;
+  var stack = []; //将解析后的结果组合成ast树 -> stack
+
   function createAstElement(tagName, attrs) {
     return {
       tag: tagName,
@@ -124,9 +126,6 @@
       attrs: attrs
     };
   }
-
-  var root = null;
-  var stack = [];
 
   function parserHTML(html) {
     function start(tagName, attributes) {
