@@ -13,7 +13,6 @@ function defineReactive(target, key, value) {
     },
     set(newValue) {
       if (value === newValue) return
-      console.log('更新数据')
       observe(newValue)
       /**
        * todo:依赖更新

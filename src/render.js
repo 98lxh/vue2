@@ -7,7 +7,6 @@ export function renderMixin(Vue) {
   // _sJSON.stringify()
   Vue.prototype._c = function () {
     // tag data children
-    console.log(...arguments)
     return createElement(...arguments)
   }
 

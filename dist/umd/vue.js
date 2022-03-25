@@ -348,8 +348,7 @@
     var root = parserHTML(template); //将ats语法树转换成js语法
     //<div id="app"></div> -> _c("div",{id:app},"")
 
-    var code = generate(root);
-    console.log(code); //所有的模板引擎实现都需要new Function + with
+    var code = generate(root); //所有的模板引擎实现都需要new Function + with
 
     var renderFn = new Function("with(this){return ".concat(code, "}"));
     return renderFn;
@@ -422,7 +421,6 @@
       },
       set: function set(newValue) {
         if (value === newValue) return;
-        console.log('更新数据');
         observe(newValue);
         /**
          * todo:依赖更新
@@ -530,9 +528,72 @@
     return Watcher;
   }();
 
+  /**
+   * 老节点和新节点做比对diff
+  */
+  function patch(oldVnode, vnode) {
+    //判断更新还是渲染
+    var isRealElement = oldVnode.nodeType;
+
+    if (isRealElement) {
+      console.log('当前旧节点是真实节点,进入首次渲染'); //初次渲染
+
+      var oldElm = oldVnode;
+      var parentElm = oldElm.parentNode; // body
+
+      var el = createElm(vnode); //挂载
+
+      parentElm.insertBefore(el, oldElm.nextSibling); //删除旧的节点
+
+      parentElm.removeChild(oldElm);
+    } //递归创建真实节点，替换掉老的节点
+
+  } //更新属性
+
+  function updatePropertys(vnode) {
+    var newProps = vnode.data || {};
+    var el = vnode.el;
+
+    for (var key in newProps) {
+      if (key === 'style') {
+        for (var styleName in newProps.style) {
+          el.style[styleName] = newProps.style[styleName];
+        }
+      } else if (key === 'class') {
+        el["class"] = newProps["class"];
+      } else {
+        el.setAttribute(key, newProps[key]);
+      }
+    }
+  } //根据虚拟节点创建真实的节点
+
+
+  function createElm(vnode) {
+    var tag = vnode.tag,
+        children = vnode.children;
+        vnode.key;
+        vnode.data;
+        var text = vnode.text; //区分标签和文本
+
+    if (typeof tag === 'string') {
+      vnode.el = document.createElement(tag);
+      updatePropertys(vnode);
+      children.forEach(function (child) {
+        //递归创建儿子节点，将儿子节点放入父节点中
+        return vnode.el.appendChild(createElm(child));
+      });
+    } else {
+      //虚拟dom上映射着真实dom方便获取更新操作
+      vnode.el = document.createTextNode(text);
+    }
+
+    return vnode.el;
+  }
+
   function lifecycleMixin(Vue) {
     Vue.prototype._update = function (vnode) {
-      console.log(vnode);
+      var vm = this;
+      vm.$el = patch(vm.$el, vnode);
     };
   }
   function mountComponent(vm, el) {
@@ -622,11 +683,7 @@
     // _v创建文本的虚拟节点
     // _sJSON.stringify()
     Vue.prototype._c = function () {
-      var _console;
-
       // tag data children
-      (_console = console).log.apply(_console, arguments);
-
       return createElement.apply(void 0, arguments);
     };
 

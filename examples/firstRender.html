@@ -7,10 +7,10 @@
   <title>Document</title>
 </head>
 <body>
-  <div id="app" style="background: fixed;">
-    <p style="color: red;">hello {{name}}</p>
-    <p style="color: red;">hello {{name}}</p>
-    <p style="color: red;">hello {{name}}</p>
+  <div id="app" style="background: black;">
+    <li style="color:white">hello {{word}}</li>
+    <li style="color:white">hello {{word}}</li>
+    <li style="color:white">hello {{word}}</li>
   </div>
   <script src="/dist/umd/vue.js"></script>
   <script>
@@ -18,20 +18,10 @@
       el:'#app',
       data(){
         return {
-          name:'lxh',
-          age:25,
-          address:{
-            home:'bjs'
-          },
-          arr:[1,2,3,{
-            t1:'t1'
-          }]
+          word:'word'
         }
-      },
-      computed(){},
-      watch(){}
+      }
     })
-
   </script>
 </body>
 </html>
