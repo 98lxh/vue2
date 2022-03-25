@@ -192,8 +192,7 @@ function genChildren(el) {
 
 function generate(el) {
   const children = genChildren(el);
-  let code = `_c("${el.tag}",${el.attrs})${children ? `,${children}` : ''
-    }`
+  let code = `_c("${el.tag}",${el.attrs}${children ? `,${children}` : ''})`
 
   return code
 }
@@ -205,9 +204,9 @@ export function compileToFunction(template) {
   //将ats语法树转换成js语法
   //<div id="app"></div> -> _c("div",{id:app},"")
   let code = generate(root);
+  console.log(code)
   //所有的模板引擎实现都需要new Function + with
   let renderFn = new Function(`with(this){return ${code}}`)
 
-  console.log(code)
   return renderFn
 }

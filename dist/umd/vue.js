@@ -339,7 +339,7 @@
 
   function generate(el) {
     var children = genChildren(el);
-    var code = "_c(\"".concat(el.tag, "\",").concat(el.attrs, ")").concat(children ? ",".concat(children) : '');
+    var code = "_c(\"".concat(el.tag, "\",").concat(el.attrs).concat(children ? ",".concat(children) : '', ")");
     return code;
   }
 
@@ -348,10 +348,10 @@
     var root = parserHTML(template); //将ats语法树转换成js语法
     //<div id="app"></div> -> _c("div",{id:app},"")
 
-    var code = generate(root); //所有的模板引擎实现都需要new Function + with
+    var code = generate(root);
+    console.log(code); //所有的模板引擎实现都需要new Function + with
 
     var renderFn = new Function("with(this){return ".concat(code, "}"));
-    console.log(code);
     return renderFn;
   }
 
@@ -507,6 +507,50 @@
     observe(data);
   }
 
+  var Watcher = /*#__PURE__*/function () {
+    function Watcher(vm, expOrFn, fn, callback, options) {
+      _classCallCheck(this, Watcher);
+
+      this.vm = vm;
+      this.callback = callback;
+      this.fn = fn;
+      this.options = options; //传入的回调函数放到getter属性上
+
+      this.getter = expOrFn;
+      this.get();
+    }
+
+    _createClass(Watcher, [{
+      key: "get",
+      value: function get() {
+        this.getter();
+      }
+    }]);
+
+    return Watcher;
+  }();
+
+  function lifecycleMixin(Vue) {
+    Vue.prototype._update = function (vnode) {
+      console.log(vnode);
+    };
+  }
+  function mountComponent(vm, el) {
+    vm.$options;
+    vm.$el = el; //真实的dom元素
+    //渲染还是更新都会调用这个方法
+
+    var updateComponent = function updateComponent() {
+      //返回虚拟dom
+      vm._update(vm._render());
+    }; //每个组件一定有一个渲染watcher
+    //渲染watcher
+    //true表示是一个渲染watcher
+
+
+    new Watcher(vm, updateComponent, function () {}, true);
+  }
+
   function initMixin(Vue) {
     //初始化流程
     Vue.prototype._init = function (options) {
@@ -538,6 +582,68 @@
           options.render = render;
         }
       }
+
+      mountComponent(vm, el);
+    };
+  }
+
+  function createElement(tag) {
+    var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    var key = data.key;
+
+    if (key) {
+      delete data.key;
+    }
+
+    for (var _len = arguments.length, children = new Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
+      children[_key - 2] = arguments[_key];
+    }
+
+    return vnode(tag, data, key, children, undefined);
+  }
+  function createTextNode(text) {
+    return vnode(undefined, undefined, undefined, undefined, text);
+  } //生成虚拟节点  虚拟节点 -> 用js描述dom元素
+  // 将template转换成ast -> 生成render方法 -> 生成虚拟dom -> 生成真实dom
+  //页面更新重新生成虚拟dom -> 更新dom
+
+  function vnode(tag, data, key, children, text) {
+    return {
+      tag: tag,
+      data: data,
+      key: key,
+      children: children,
+      text: text
+    };
+  }
+
+  function renderMixin(Vue) {
+    // _c是创建元素的虚拟节点
+    // _v创建文本的虚拟节点
+    // _sJSON.stringify()
+    Vue.prototype._c = function () {
+      var _console;
+
+      // tag data children
+      (_console = console).log.apply(_console, arguments);
+
+      return createElement.apply(void 0, arguments);
+    };
+
+    Vue.prototype._v = function (text) {
+      return createTextNode(text);
+    };
+
+    Vue.prototype._s = function (value) {
+      return value === null ? '' : _typeof(value) === 'object' ? JSON.stringify(value) : value;
+    };
+
+    Vue.prototype._render = function () {
+      var vm = this;
+      var render = vm.$options.render; //实例上取值
+
+      var vnode = render.call(vm);
+      return vnode;
     };
   }
 
@@ -547,6 +653,8 @@
   }
 
   initMixin(Vue);
+  renderMixin(Vue);
+  lifecycleMixin(Vue);
 
   return Vue;
 

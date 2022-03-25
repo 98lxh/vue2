@@ -2,6 +2,8 @@
 import { compileToFunction } from "./compiler/index";
 import { initState } from "./state";
 
+import { mountComponent } from "./lifecycle"
+
 //在原型添加一个init方法
 export function initMixin(Vue) {
   //初始化流程
@@ -35,5 +37,7 @@ export function initMixin(Vue) {
         options.render = render
       }
     }
+
+    mountComponent(vm, el);
   }
 }
