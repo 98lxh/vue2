@@ -521,7 +521,14 @@
       key: "depend",
       value: function depend() {
         //观察者模式
+        //让watcher记住当前dep
+        Dep.target.addDep(this);
         this.subs.push(Dep.target);
+      }
+    }, {
+      key: "addSub",
+      value: function addSub(watcher) {
+        this.subs.push(watcher);
       } //依赖更新
 
     }, {
@@ -652,9 +659,11 @@
       this.callback = callback;
       this.fn = fn;
       this.options = options;
+      this.depsId = new Set();
       this.id = id++; //传入的回调函数放到getter属性上
 
       this.getter = expOrFn;
+      this.deps = [];
       this.get();
     }
 
@@ -670,6 +679,19 @@
       key: "update",
       value: function update() {
         this.get();
+      }
+    }, {
+      key: "addDep",
+      value: function addDep(dep) {
+        //watcher里不能放重复的dep
+        //dep也不能放重复的watcher
+        var id = dep.id;
+
+        if (!this.depsId.has(id)) {
+          this.depsId.add(id);
+          this.deps.push(dep);
+          dep.addSub(this);
+        }
       }
     }]);
 

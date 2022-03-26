@@ -7,7 +7,14 @@ export class Dep {
   //依赖收集
   depend(){
     //观察者模式
+  
+    //让watcher记住当前dep
+    Dep.target.addDep(this)
     this.subs.push(Dep.target)
+  }
+
+  addSub(watcher){
+    this.subs.push(watcher)
   }
 
   //依赖更新

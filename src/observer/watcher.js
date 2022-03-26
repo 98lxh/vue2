@@ -7,10 +7,11 @@ class Watcher {
     this.callback = callback;
     this.fn = fn;
     this.options = options;
+    this.depsId = new Set()
     this.id = id ++
     //传入的回调函数放到getter属性上
     this.getter = expOrFn;
-
+    this.deps = []
     this.get()
   }
   get() {
@@ -20,6 +21,17 @@ class Watcher {
   }
   update(){
     this.get()
+  }
+  addDep(dep){
+    //watcher里不能放重复的dep
+    //dep也不能放重复的watcher
+    let id = dep.id
+    if(!this.depsId.has(id)){
+      this.depsId.add(id)
+      this.deps.push(dep)
+
+      dep.addSub(this)
+    }
   }
 }
 
