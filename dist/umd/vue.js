@@ -822,20 +822,11 @@
 
   function initGolbalAPI(Vue) {
     //整合了全局相关的内容
-    Vue.options = {}; //生命周期的合并策略
+    Vue.options = {};
 
     Vue.mixin = function (mixin) {
       this.options = mergeOptions(this.options, mixin);
     };
-
-    Vue.mixin({
-      a: 1,
-      beforeCreate: function beforeCreate() {}
-    });
-    Vue.mixin({
-      b: 2,
-      beforeCreate: function beforeCreate() {}
-    });
   }
 
   function Vue(options) {
