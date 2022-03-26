@@ -507,23 +507,63 @@
     };
   });
 
+  var id$1 = 0;
+  var Dep = /*#__PURE__*/function () {
+    function Dep() {
+      _classCallCheck(this, Dep);
+
+      this.id = id$1++;
+      this.subs = [];
+    } //依赖收集
+
+
+    _createClass(Dep, [{
+      key: "depend",
+      value: function depend() {
+        //观察者模式
+        this.subs.push(Dep.target);
+      } //依赖更新
+
+    }, {
+      key: "notify",
+      value: function notify() {
+        this.subs.forEach(function (watcher) {
+          watcher.update();
+        });
+      }
+    }]);
+
+    return Dep;
+  }(); //静态属性
+  var stack = []; //将watcher保留 和移除
+
+  function pushTarget(watcher) {
+    Dep.target = watcher;
+    stack.push(watcher);
+  }
+  function popTarget() {
+    stack.pop();
+    Dep.target = stack[stack.length - 1];
+  }
+
   function defineReactive(target, key, value) {
+    var dep = new Dep();
     observe(value);
     return Object.defineProperty(target, key, {
       get: function get() {
-        /**
-         * todo:依赖收集
-        */
+        //每个属性都对应着自己的watcher
+        if (Dep.target) {
+          //如果当前有watcher
+          dep.depend();
+        }
+
         return value;
       },
       set: function set(newValue) {
         if (value === newValue) return;
         observe(newValue);
-        /**
-         * todo:依赖更新
-        */
-
         value = newValue;
+        dep.notify(); //通知依赖的watcher进行更新操作
       }
     });
   }
@@ -602,6 +642,8 @@
     observe(data);
   }
 
+  var id = 0;
+
   var Watcher = /*#__PURE__*/function () {
     function Watcher(vm, expOrFn, fn, callback, options) {
       _classCallCheck(this, Watcher);
@@ -609,7 +651,8 @@
       this.vm = vm;
       this.callback = callback;
       this.fn = fn;
-      this.options = options; //传入的回调函数放到getter属性上
+      this.options = options;
+      this.id = id++; //传入的回调函数放到getter属性上
 
       this.getter = expOrFn;
       this.get();
@@ -618,7 +661,15 @@
     _createClass(Watcher, [{
       key: "get",
       value: function get() {
+        pushTarget(this); //把watcher存起来
+
         this.getter();
+        popTarget(); //移除watcher
+      }
+    }, {
+      key: "update",
+      value: function update() {
+        this.get();
       }
     }]);
 

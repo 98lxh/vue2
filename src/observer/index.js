@@ -1,23 +1,26 @@
 
 import { def, isObject } from "../utils/index";
 import { arrayMetods } from "./array"
+import {Dep} from './dep'
 
 function defineReactive(target, key, value) {
+  let dep = new Dep()
   observe(value);
   return Object.defineProperty(target, key, {
     get() {
-      /**
-       * todo:依赖收集
-      */
+      //每个属性都对应着自己的watcher
+      if(Dep.target){
+        //如果当前有watcher
+        dep.depend()
+      }
       return value
     },
     set(newValue) {
       if (value === newValue) return
       observe(newValue)
-      /**
-       * todo:依赖更新
-      */
       value = newValue
+
+      dep.notify();//通知依赖的watcher进行更新操作
     }
   })
 }

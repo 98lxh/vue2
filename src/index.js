@@ -1,7 +1,7 @@
 import { initMixin } from "./init";
 import { renderMixin } from "./render";
 import { lifecycleMixin } from './lifecycle'
-import { initGolbalAPI } from "./initGolbalAPI/index";
+import { initGolbalAPI } from "./initGlobalAPI/index";
 //核心
 function Vue(options) {
   //进行初始化
