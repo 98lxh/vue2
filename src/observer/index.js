@@ -29,7 +29,6 @@ function defineReactive(target, key, value) {
         dep.depend()
         if(childOb){
           //收集了数组的相关依赖
-          // console.log(childOb.dep.depend)
           childOb.dep.depend()
 
           //如果数组中还有数组也去收集依赖

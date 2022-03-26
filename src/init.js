@@ -4,6 +4,7 @@ import { initState } from "./state";
 
 import { callHook, mountComponent } from "./lifecycle"
 import { mergeOptions } from "./utils/index";
+import { nextTick } from "./utils/nextTick";
 
 //在原型添加一个init方法
 export function initMixin(Vue) {
@@ -46,4 +47,7 @@ export function initMixin(Vue) {
 
     mountComponent(vm, el);
   }
+
+  //用户内部调用的nextTick
+  Vue.prototype.$nextTick = nextTick
 }

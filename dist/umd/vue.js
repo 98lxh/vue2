@@ -579,7 +579,6 @@
 
           if (childOb) {
             //收集了数组的相关依赖
-            // console.log(childOb.dep.depend)
             childOb.dep.depend(); //如果数组中还有数组也去收集依赖
 
             if (Array.isArray(value)) {
@@ -675,6 +674,52 @@
     observe(data);
   }
 
+  var callbacks = [];
+  var waiting = false;
+
+  function flushCallback() {
+    callbacks.forEach(function (cb) {
+      return cb();
+    });
+    waiting = false;
+    callbacks = [];
+  } // 多次调用nextTick 如果没有刷新的时候就先放到数组中
+  // 刷新后更改waiting
+
+
+  function nextTick(cb) {
+    callbacks.push(cb);
+
+    if (waiting === false) {
+      setTimeout(flushCallback, 0);
+      waiting = true;
+    }
+  }
+
+  var queue = [];
+  var has = {};
+
+  function flushSchedularQueue() {
+    queue.forEach(function (watcher) {
+      return watcher.run();
+    });
+    queue = []; //下一次可以继续执行
+
+    has = {};
+  }
+
+  function queueWatcher(watcher) {
+    var id = watcher.id;
+
+    if (has[id] == null) {
+      queue.push(watcher);
+      has[id] = true; //宏任务和微任务向下兼容
+      //Vue.nextTick = promise.then -> mutationObserver -> setImmediate -> setTimeout
+
+      nextTick(flushSchedularQueue);
+    }
+  }
+
   var id = 0;
 
   var Watcher = /*#__PURE__*/function () {
@@ -702,11 +747,6 @@
         popTarget(); //移除watcher
       }
     }, {
-      key: "update",
-      value: function update() {
-        this.get();
-      }
-    }, {
       key: "addDep",
       value: function addDep(dep) {
         //watcher里不能放重复的dep
@@ -718,6 +758,18 @@
           this.deps.push(dep);
           dep.addSub(this);
         }
+      }
+    }, {
+      key: "update",
+      value: function update() {
+        //等待一起更新 因为每次调用update的时候都放入了watcher
+        // this.get()
+        queueWatcher(this);
+      }
+    }, {
+      key: "run",
+      value: function run() {
+        this.get();
       }
     }]);
 
@@ -794,7 +846,6 @@
     };
   }
   function mountComponent(vm, el) {
-    vm.$options;
     vm.$el = el; //真实的dom元素
 
     callHook(vm, "beforeMount"); //渲染还是更新都会调用这个方法
@@ -860,7 +911,10 @@
       }
 
       mountComponent(vm, el);
-    };
+    }; //用户内部调用的nextTick
+
+
+    Vue.prototype.$nextTick = nextTick;
   }
 
   function createElement(tag) {

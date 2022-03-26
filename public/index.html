@@ -21,20 +21,21 @@
           address:{
             home:'bjs'
           },
-          arr:[[[1,2,3]]]
+          arr:[1]
         }
-      },
-      beforeCreate() {
-        console.log(111)
       },
       computed(){},
       watch(){}
     })
 
-    setTimeout(()=>{
-      vm.arr[0][0].push(4)
-    },1000)
-
+  
+      vm.arr.push(4)
+      vm.arr.push(4)
+      vm.arr.push(4)
+      vm.arr.push(4)
+      vm.$nextTick(()=>{
+      console.log(vm.$el.innerHTML)
+    })
   </script>
 </body>
 </html>
