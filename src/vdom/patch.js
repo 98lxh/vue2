@@ -15,6 +15,8 @@ export function patch(oldVnode, vnode) {
     parentElm.insertBefore(el, oldElm.nextSibling)
     //删除旧的节点
     parentElm.removeChild(oldElm)
+
+    return el
   }
 
   //递归创建真实节点，替换掉老的节点

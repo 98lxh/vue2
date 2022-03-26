@@ -21,5 +21,4 @@ export function initGolbalAPI(Vue){
     }
   })
 
-  console.log(Vue.options)
 }

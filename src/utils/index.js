@@ -39,7 +39,6 @@ const LIFECYCLE_HOOKS = [
 
 const strats = {}
 function mergeHook(parentVal,childVal){
-  console.log(parentVal,childVal)
   if(childVal){
     if(parentVal){
       //父子选项都存在

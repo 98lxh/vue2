@@ -420,8 +420,6 @@
   var strats = {};
 
   function mergeHook(parentVal, childVal) {
-    console.log(parentVal, childVal);
-
     if (childVal) {
       if (parentVal) {
         //父子选项都存在
@@ -645,6 +643,7 @@
       parentElm.insertBefore(el, oldElm.nextSibling); //删除旧的节点
 
       parentElm.removeChild(oldElm);
+      return el;
     } //递归创建真实节点，替换掉老的节点
 
   } //更新属性
@@ -698,7 +697,8 @@
   function mountComponent(vm, el) {
     vm.$options;
     vm.$el = el; //真实的dom元素
-    //渲染还是更新都会调用这个方法
+
+    callHook(vm, "beforeMount"); //渲染还是更新都会调用这个方法
 
     var updateComponent = function updateComponent() {
       //返回虚拟dom
@@ -709,6 +709,18 @@
 
 
     new Watcher(vm, updateComponent, function () {}, true);
+    callHook(vm, "mounted");
+  }
+  function callHook(vm, hook) {
+    var handlers = vm.$options[hook]; //找到对应的钩子调用
+
+    if (handlers.length) {
+      for (var i = 0; i < handlers.length; i++) {
+        handlers[i].call(vm);
+      }
+    } else {
+      handlers.call(vm);
+    }
   }
 
   function initMixin(Vue) {
@@ -717,9 +729,13 @@
       //数据劫持
       var vm = this; //将用户传递的和全局的做合并
 
-      vm.$options = mergeOptions(vm.constructor.options, options); //初始化状态
+      vm.$options = mergeOptions(vm.constructor.options, options); //这里调用里beforeCreate 这个阶段合并了选项 但是还没有执行initState 所有数据还没有被观察
 
-      initState(vm);
+      callHook(vm, "beforeCreate"); //初始化状态
+
+      initState(vm); //这里调用里created 已经初始化了状态 可以访问响应式数据 以及其它类似computed methods ..的选项也已经完成了初始化
+
+      callHook(vm, "created");
 
       if (vm.$options.el) {
         //数据挂载到模板 
@@ -820,7 +836,6 @@
       b: 2,
       beforeCreate: function beforeCreate() {}
     });
-    console.log(Vue.options);
   }
 
   function Vue(options) {

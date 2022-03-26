@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <div id="app">{{test}}</div>
+  <script src="./../dist/umd/vue.js"></script>
+  <script>
+    new Vue({
+      el:'#app',
+      data(){
+        return {
+          test:'hello word'
+        }
+      },
+      beforeCreate() {
+        console.log('beforeCreate这个阶段拿不到响应式的数据:',this.test)
+      },
+      created() {
+        console.log('created这个阶段已经可以拿到响应式数据了:',this.test)
+      },
+      beforeMount() {
+        console.log('beforeMount这个阶段$el还没有被真是替换:',this.$el.innerHTML)
+      },
+      mounted() {
+        console.log('mounted这个阶段已经$el已经被替换了',this.$el.innerHTML)
+      },
+    })
+  </script>
+</body>
+</html>
