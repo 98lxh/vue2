@@ -33,7 +33,9 @@ methods.forEach(method => {
     if (inserted) {
       ob.observerArray(inserted)
     }
-
+    
+    //数组的依赖更新
+    ob.dep.notify()
     return result
   }
 })

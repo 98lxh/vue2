@@ -8,8 +8,7 @@
 </head>
 <body>
   <div id="app" style="background: fixed;">
-    <p style="color: red;">hello {{name}}</p>
-    <p style="color: red;">hello {{age}}</p>
+    <p style="color: red;">hello {{arr}}</p>
     <p style="color: red;">hello {{name}}</p>
   </div>
   <script src="/dist/umd/vue.js"></script>
@@ -19,13 +18,10 @@
       data(){
         return {
           name:'lxh',
-          age:{age:10},
           address:{
             home:'bjs'
           },
-          arr:[1,2,3,{
-            t1:'t1'
-          }]
+          arr:[[[1,2,3]]]
         }
       },
       beforeCreate() {
@@ -36,7 +32,7 @@
     })
 
     setTimeout(()=>{
-      vm.age = 20
+      vm.arr[0][0].push(4)
     },1000)
 
   </script>
