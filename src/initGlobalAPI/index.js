@@ -1,4 +1,4 @@
-import { mergeOptions } from "../utils/index"
+import { mergeOptions } from "../utils/merge"
 export function initGolbalAPI(Vue){
   //整合了全局相关的内容
   Vue.options = {}

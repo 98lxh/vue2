@@ -3,7 +3,7 @@ import { compileToFunction } from "./compiler/index";
 import { initState } from "./state";
 
 import { callHook, mountComponent } from "./lifecycle"
-import { mergeOptions } from "./utils/index";
+import { mergeOptions } from "./utils/merge";
 import { nextTick } from "./utils/nextTick";
 
 //在原型添加一个init方法
