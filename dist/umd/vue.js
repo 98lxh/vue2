@@ -714,11 +714,11 @@
   function callHook(vm, hook) {
     var handlers = vm.$options[hook]; //找到对应的钩子调用
 
-    if (handlers.length) {
+    if (Array.isArray(handlers) && handlers) {
       for (var i = 0; i < handlers.length; i++) {
         handlers[i].call(vm);
       }
-    } else {
+    } else if (handlers) {
       handlers.call(vm);
     }
   }
