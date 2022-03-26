@@ -1,20 +1,19 @@
-
-let root = null;
-const stack = [];
-
-//将解析后的结果组合成ast树 -> stack
-function createAstElement(tagName, attrs) {
-  return {
-    tag: tagName,
-    type: 1,
-    children: [],
-    parent: null,
-    attrs
-  }
-}
-
-
 export function parserHTML(html) {
+
+  let root = null;
+  const stack = [];
+
+  //将解析后的结果组合成ast树 -> stack
+  function createAstElement(tagName, attrs) {
+    return {
+      tag: tagName,
+      type: 1,
+      children: [],
+      parent: null,
+      attrs
+    }
+  }
+
 
   function start(tagName, attributes) {
     const parent = stack[stack.length - 1]

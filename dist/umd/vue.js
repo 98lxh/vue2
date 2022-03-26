@@ -4,6 +4,52 @@
   (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.Vue = factory());
 })(this, (function () { 'use strict';
 
+  function gen(node) {
+    if (node.type === 1) {
+      //元素节点
+      return generate(node);
+    } else {
+      //文本
+      var text = node.text;
+      var tokens = [];
+
+      while (text.trim()) {
+        //文本的结束位置
+        var textEndIndex = text.indexOf("{{");
+
+        if (textEndIndex === 0) {
+          //表达式的结束位置
+          var execEndIndex = text.indexOf("}}");
+          tokens.push("_s(".concat(text.slice(textEndIndex + 2, execEndIndex), ")"));
+          text = text.slice(execEndIndex + 2);
+        } else {
+          tokens.push(JSON.stringify(text.slice(0, textEndIndex)));
+          text = text.slice(textEndIndex);
+        }
+      }
+
+      return "_v(".concat(tokens.join("+"), ")");
+    }
+  }
+
+  function genChildren(el) {
+    var children = el.children;
+
+    if (children && children.length > 0) {
+      return "".concat(children.map(function (c) {
+        return gen(c);
+      }).join(','));
+    } else {
+      return false;
+    }
+  }
+
+  function generate(el) {
+    var children = genChildren(el);
+    var code = "_c(\"".concat(el.tag, "\",").concat(el.attrs).concat(children ? ",".concat(children) : '', ")");
+    return code;
+  }
+
   function _typeof(obj) {
     "@babel/helpers - typeof";
 
@@ -114,20 +160,20 @@
     throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
   }
 
-  var root = null;
-  var stack = []; //将解析后的结果组合成ast树 -> stack
-
-  function createAstElement(tagName, attrs) {
-    return {
-      tag: tagName,
-      type: 1,
-      children: [],
-      parent: null,
-      attrs: attrs
-    };
-  }
-
   function parserHTML(html) {
+    var root = null;
+    var stack = []; //将解析后的结果组合成ast树 -> stack
+
+    function createAstElement(tagName, attrs) {
+      return {
+        tag: tagName,
+        type: 1,
+        children: [],
+        parent: null,
+        attrs: attrs
+      };
+    }
+
     function start(tagName, attributes) {
       var parent = stack[stack.length - 1];
       var element = createAstElement(tagName, attributes); //设置根节点
@@ -294,52 +340,6 @@
     }
 
     return root;
-  }
-
-  function gen(node) {
-    if (node.type === 1) {
-      //元素节点
-      return generate(node);
-    } else {
-      //文本
-      var text = node.text;
-      var tokens = [];
-
-      while (text.trim()) {
-        //文本的结束位置
-        var textEndIndex = text.indexOf("{{");
-
-        if (textEndIndex === 0) {
-          //表达式的结束位置
-          var execEndIndex = text.indexOf("}}");
-          tokens.push("_s(".concat(text.slice(textEndIndex + 2, execEndIndex), ")"));
-          text = text.slice(execEndIndex + 2);
-        } else {
-          tokens.push(JSON.stringify(text.slice(0, textEndIndex)));
-          text = text.slice(textEndIndex);
-        }
-      }
-
-      return "_v(".concat(tokens.join("+"), ")");
-    }
-  }
-
-  function genChildren(el) {
-    var children = el.children;
-
-    if (children && children.length > 0) {
-      return "".concat(children.map(function (c) {
-        return gen(c);
-      }).join(','));
-    } else {
-      return false;
-    }
-  }
-
-  function generate(el) {
-    var children = genChildren(el);
-    var code = "_c(\"".concat(el.tag, "\",").concat(el.attrs).concat(children ? ",".concat(children) : '', ")");
-    return code;
   }
 
   function compileToFunction(template) {
