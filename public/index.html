@@ -7,34 +7,22 @@
   <title>Document</title>
 </head>
 <body>
-  <div id="app" style="background: fixed;">
-    <p style="color: red;">hello {{arr}}</p>
-    <p style="color: red;">hello {{name}}</p>
+  <div id="app">
+    {{name}}
+    <my-component></my-component>
   </div>
   <script src="/dist/umd/vue.js"></script>
   <script>
+    Vue.component('my-component',{
+      template:`<div>hello word</div>`
+    })
     const vm = new Vue({
       el:'#app',
       data(){
         return {
           name:'lxh',
-          address:{
-            home:'bjs'
-          },
-          arr:[1]
         }
       },
-      computed(){},
-      watch(){}
-    })
-
-  
-      vm.arr.push(4)
-      vm.arr.push(4)
-      vm.arr.push(4)
-      vm.arr.push(4)
-      vm.$nextTick(()=>{
-      console.log(vm.$el.innerHTML)
     })
   </script>
 </body>

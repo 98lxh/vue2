@@ -838,7 +838,7 @@
   LIFECYCLE_HOOKS.forEach(function (hook) {
     strats[hook] = mergeHook;
   });
-  function mergeOptions(parent, child) {
+  function mergeOptions$1(parent, child) {
     var options = {};
 
     for (var key in parent) {
@@ -880,7 +880,7 @@
       //数据劫持
       var vm = this; //将用户传递的和全局的做合并
 
-      vm.$options = mergeOptions(vm.constructor.options, options); //这里调用里beforeCreate 这个阶段合并了选项 但是还没有执行initState 所有数据还没有被观察
+      vm.$options = mergeOptions$1(vm.constructor.options, options); //这里调用里beforeCreate 这个阶段合并了选项 但是还没有执行initState 所有数据还没有被观察
 
       callHook(vm, "beforeCreate"); //初始化状态
 
@@ -974,13 +974,14 @@
     };
   }
 
+  function mixin(mixin) {
+    this.options = mergeOptions(this.options, mixin);
+  }
+
   function initGolbalAPI(Vue) {
     //整合了全局相关的内容
     Vue.options = {};
-
-    Vue.mixin = function (mixin) {
-      this.options = mergeOptions(this.options, mixin);
-    };
+    Vue.mixin = mixin;
   }
 
   function Vue(options) {
