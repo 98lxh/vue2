@@ -3,6 +3,7 @@ import { compileToFunction } from "./compiler/index";
 import { initState } from "./state";
 
 import { mountComponent } from "./lifecycle"
+import { mergeOptions } from "./utils/index";
 
 //在原型添加一个init方法
 export function initMixin(Vue) {
@@ -11,7 +12,8 @@ export function initMixin(Vue) {
 
     //数据劫持
     const vm = this;
-    vm.$options = options;
+    //将用户传递的和全局的做合并
+    vm.$options = mergeOptions(vm.constructor.options,options);
 
     //初始化状态
     initState(vm);

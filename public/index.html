@@ -9,7 +9,7 @@
 <body>
   <div id="app" style="background: fixed;">
     <p style="color: red;">hello {{name}}</p>
-    <p style="color: red;">hello {{name}}</p>
+    <p style="color: red;">hello {{age}}</p>
     <p style="color: red;">hello {{name}}</p>
   </div>
   <script src="/dist/umd/vue.js"></script>
@@ -19,7 +19,7 @@
       data(){
         return {
           name:'lxh',
-          age:25,
+          age:{age:10},
           address:{
             home:'bjs'
           },
@@ -27,6 +27,9 @@
             t1:'t1'
           }]
         }
+      },
+      beforeCreate() {
+        console.log(111)
       },
       computed(){},
       watch(){}

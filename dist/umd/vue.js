@@ -50,6 +50,32 @@
     return code;
   }
 
+  function ownKeys(object, enumerableOnly) {
+    var keys = Object.keys(object);
+
+    if (Object.getOwnPropertySymbols) {
+      var symbols = Object.getOwnPropertySymbols(object);
+      enumerableOnly && (symbols = symbols.filter(function (sym) {
+        return Object.getOwnPropertyDescriptor(object, sym).enumerable;
+      })), keys.push.apply(keys, symbols);
+    }
+
+    return keys;
+  }
+
+  function _objectSpread2(target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = null != arguments[i] ? arguments[i] : {};
+      i % 2 ? ownKeys(Object(source), !0).forEach(function (key) {
+        _defineProperty(target, key, source[key]);
+      }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) {
+        Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
+      });
+    }
+
+    return target;
+  }
+
   function _typeof(obj) {
     "@babel/helpers - typeof";
 
@@ -83,6 +109,21 @@
       writable: false
     });
     return Constructor;
+  }
+
+  function _defineProperty(obj, key, value) {
+    if (key in obj) {
+      Object.defineProperty(obj, key, {
+        value: value,
+        enumerable: true,
+        configurable: true,
+        writable: true
+      });
+    } else {
+      obj[key] = value;
+    }
+
+    return obj;
   }
 
   function _slicedToArray(arr, i) {
@@ -375,6 +416,65 @@
       }
     });
   }
+  var LIFECYCLE_HOOKS = ['beforeCreate', 'created', 'beforeMount', 'mountd', 'beforeUpdate', 'updated', 'beforeDistory', 'distoryed'];
+  var strats = {};
+
+  function mergeHook(parentVal, childVal) {
+    console.log(parentVal, childVal);
+
+    if (childVal) {
+      if (parentVal) {
+        //父子选项都存在
+        //返回一个数组 子选项在前:先执行子选项
+        return parentVal.concat(childVal);
+      } else {
+        //父选项不存在 返回子选项
+        return [childVal];
+      }
+    } else {
+      //如果子选项不存在 直接返回父选项
+      return parentVal;
+    }
+  }
+
+  LIFECYCLE_HOOKS.forEach(function (hook) {
+    strats[hook] = mergeHook;
+  });
+  function mergeOptions(parent, child) {
+    var options = {};
+
+    for (var key in parent) {
+      mergeField(key);
+    }
+
+    for (var _key in child) {
+      //如果已经合并过的就没有必要在合并了
+      if (!options.hasOwnProperty[_key]) {
+        mergeField(_key);
+      }
+    } //默认的合并策略 但是有些属性合并有特殊的方式比如:生命周期
+
+
+    function mergeField(key) {
+      if (strats[key]) {
+        //当前有符合合并策略的选项
+        return options[key] = strats[key](parent[key], child[key]);
+      }
+
+      if (_typeof(parent[key]) === 'object' && _typeof(child[key]) === 'object') {
+        //父子选项都是object
+        options[key] = _objectSpread2(_objectSpread2({}, parent[key]), child[key]);
+      } else if (child[key] == null) {
+        //子选项为null 以父选项为准   
+        options[key] = parent[key];
+      } else {
+        //父子都有该选项 且父子选项都不是object类型 以子选项为准
+        options[key] = child[key];
+      }
+    }
+
+    return options;
+  }
 
   var oldArrayMethods = Array.prototype;
   var arrayMetods = Object.create(oldArrayMethods);
@@ -615,8 +715,9 @@
     //初始化流程
     Vue.prototype._init = function (options) {
       //数据劫持
-      var vm = this;
-      vm.$options = options; //初始化状态
+      var vm = this; //将用户传递的和全局的做合并
+
+      vm.$options = mergeOptions(vm.constructor.options, options); //初始化状态
 
       initState(vm);
 
@@ -703,6 +804,25 @@
     };
   }
 
+  function initGolbalAPI(Vue) {
+    //整合了全局相关的内容
+    Vue.options = {}; //生命周期的合并策略
+
+    Vue.mixin = function (mixin) {
+      this.options = mergeOptions(this.options, mixin);
+    };
+
+    Vue.mixin({
+      a: 1,
+      beforeCreate: function beforeCreate() {}
+    });
+    Vue.mixin({
+      b: 2,
+      beforeCreate: function beforeCreate() {}
+    });
+    console.log(Vue.options);
+  }
+
   function Vue(options) {
     //进行初始化
     this._init(options);
@@ -711,6 +831,7 @@
   initMixin(Vue);
   renderMixin(Vue);
   lifecycleMixin(Vue);
+  initGolbalAPI(Vue);
 
   return Vue;
 
