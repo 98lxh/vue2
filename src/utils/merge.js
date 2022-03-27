@@ -1,15 +1,22 @@
+const strats = {}
+
+//生命周期的合并策略
 const LIFECYCLE_HOOKS = [
   'beforeCreate',
   'created',
   'beforeMount',
-  'mountd',
+  'mounted',
   'beforeUpdate',
   'updated',
   'beforeDistory',
   'distoryed'
 ]
 
-const strats = {}
+
+LIFECYCLE_HOOKS.forEach(hook => {
+  strats[hook] = mergeHook
+})
+
 function mergeHook(parentVal,childVal){
   if(childVal){
     if(parentVal){
@@ -26,9 +33,20 @@ function mergeHook(parentVal,childVal){
   }
 }
 
-LIFECYCLE_HOOKS.forEach(hook => {
-  strats[hook] = mergeHook
-})
+
+//组件的合并策略
+strats.components = mergeAssets
+function mergeAssets(parentVal,childVal){
+  //基于父类创建出一个原型 res.__proto__
+  //这样合并完成后子组件就会先找自己的components在去沿着原型链找父类
+  const res = Object.create(parentVal);
+  if(childVal){
+    for(let key in childVal){
+      res[key] = childVal
+    }
+  }
+  return res
+}
 
 export function mergeOptions(parent,child){
   const options = {};

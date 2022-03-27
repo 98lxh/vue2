@@ -807,17 +807,17 @@
   function callHook(vm, hook) {
     var handlers = vm.$options[hook]; //找到对应的钩子调用
 
-    if (Array.isArray(handlers) && handlers) {
-      for (var i = 0; i < handlers.length; i++) {
-        handlers[i].call(vm);
-      }
-    } else if (handlers) {
-      handlers.call(vm);
+    for (var i = 0; i < handlers.length; i++) {
+      handlers[i].call(vm);
     }
   }
 
-  var LIFECYCLE_HOOKS = ['beforeCreate', 'created', 'beforeMount', 'mountd', 'beforeUpdate', 'updated', 'beforeDistory', 'distoryed'];
-  var strats = {};
+  var strats = {}; //生命周期的合并策略
+
+  var LIFECYCLE_HOOKS = ['beforeCreate', 'created', 'beforeMount', 'mounted', 'beforeUpdate', 'updated', 'beforeDistory', 'distoryed'];
+  LIFECYCLE_HOOKS.forEach(function (hook) {
+    strats[hook] = mergeHook;
+  });
 
   function mergeHook(parentVal, childVal) {
     if (childVal) {
@@ -833,11 +833,25 @@
       //如果子选项不存在 直接返回父选项
       return parentVal;
     }
+  } //组件的合并策略
+
+
+  strats.components = mergeAssets;
+
+  function mergeAssets(parentVal, childVal) {
+    //基于父类创建出一个原型 res.__proto__
+    //这样合并完成后子组件就会先找自己的components在去沿着原型链找父类
+    var res = Object.create(parentVal);
+
+    if (childVal) {
+      for (var key in childVal) {
+        res[key] = childVal;
+      }
+    }
+
+    return res;
   }
 
-  LIFECYCLE_HOOKS.forEach(function (hook) {
-    strats[hook] = mergeHook;
-  });
   function mergeOptions$1(parent, child) {
     var options = {};
 
@@ -874,7 +888,7 @@
     return options;
   }
 
-  function initMixin(Vue) {
+  function initMixin$1(Vue) {
     //初始化流程
     Vue.prototype._init = function (options) {
       //数据劫持
@@ -974,14 +988,63 @@
     };
   }
 
-  function mixin(mixin) {
-    this.options = mergeOptions(this.options, mixin);
+  var ASSETS_TYPE = ['component', 'filter', 'directive', 'mixin'];
+
+  function initAssetsRegister(Vue) {
+    ASSETS_TYPE.forEach(function (type) {
+      Vue[type] = function (id, definition) {
+        switch (type) {
+          case 'component':
+            //使用extned方法 将对象变成构造函数
+            //子类(子组件也有可能有component方法)
+            definition = this.options._base.extend(definition);
+            break;
+        }
+
+        this.options[type + 's'][id] = definition;
+      };
+    });
+  }
+
+  function initExtend(Vue) {
+    //子类和父类 对应子组件和父组件
+    //创建子类继承于父类宽展的时候都扩展到自己的属性上
+    Vue.extend = function (extendOptions) {
+      var Sub = function VueComponent(options) {
+        this._init(options);
+      }; //继承父类
+
+
+      Sub.prototype = Object.create(this.prototype); //这种方式继承会改变子类构造函数 需要手动指回
+
+      Sub.constructor = Sub; //子类属性和父类属性做合并
+
+      Sub.options = mergeOptions$1(this.options, extendOptions);
+      Sub.mixin = this.mixin;
+      Sub.component = this.component;
+      return Sub;
+    };
+  }
+
+  function initMixin(Vue) {
+    Vue.mixin = function (mixin) {
+      this.options = mergeOptions(this.options, mixin);
+    };
   }
 
   function initGolbalAPI(Vue) {
     //整合了全局相关的内容
     Vue.options = {};
-    Vue.mixin = mixin;
+    initMixin(Vue); //初始化全局过滤器指令都放在options上
+
+    ASSETS_TYPE.forEach(function (type) {
+      Vue.options[type + 's'] = {};
+    }); //_base是Vue的构造函数
+
+    Vue.options._base = Vue; //注册extend方法
+
+    initExtend(Vue);
+    initAssetsRegister(Vue);
   }
 
   function Vue(options) {
@@ -989,7 +1052,7 @@
     this._init(options);
   }
 
-  initMixin(Vue);
+  initMixin$1(Vue);
   renderMixin(Vue);
   lifecycleMixin(Vue);
   initGolbalAPI(Vue);

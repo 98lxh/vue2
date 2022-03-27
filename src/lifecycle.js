@@ -30,11 +30,7 @@ export function mountComponent(vm, el) {
 export function callHook(vm, hook) {
   const handlers = vm.$options[hook]
   //找到对应的钩子调用
-  if (Array.isArray(handlers) && handlers) {
-    for (let i = 0; i < handlers.length; i++) {
-      handlers[i].call(vm)
-    }
-  }else if(handlers){
-    handlers.call(vm)
+  for (let i = 0; i < handlers.length; i++) {
+    handlers[i].call(vm)
   }
 }

@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
 </head>
+
 <body>
   <div id="app">
     {{name}}
@@ -13,17 +15,25 @@
   </div>
   <script src="/dist/umd/vue.js"></script>
   <script>
-    Vue.component('my-component',{
-      template:`<div>hello word</div>`
+    Vue.component('my-component1', {
+      template: `<div>hello word</div>`
     })
     const vm = new Vue({
-      el:'#app',
-      data(){
+      el: '#app',
+      data() {
         return {
-          name:'lxh',
+          name: 'lxh',
         }
       },
+      components: {
+        'my-component': {
+          template: `<div>hello 子组件</div>`
+        }
+      }
     })
+
+    console.log(vm)
   </script>
 </body>
+
 </html>
