@@ -322,12 +322,18 @@
       } //处理style
 
 
-      var styleIdx = attrStr.indexOf('style');
+      var styleStartIdx = attrStr.indexOf('style');
       var styleStr;
 
-      if (styleIdx !== -1) {
-        styleStr = attrStr.slice(styleIdx, attrStr.length - 1);
-        attrStr = attrStr.slice(0, styleIdx);
+      if (styleStartIdx !== -1) {
+        //style开始到结尾的字符串
+        styleStr = attrStr.slice(styleStartIdx, attrStr.length - 1);
+        var styleEndIndex = styleStr.indexOf(" ");
+
+        if (styleEndIndex !== -1) {
+          styleStr = styleStr.slice(0, styleEndIndex);
+          attrStr = attrStr.split(styleStr).join("");
+        }
       }
 
       var attrArr = attrStr ? attrStr.trim().split(' ') : []; //解析成一个属性字符串
@@ -729,6 +735,7 @@
   function patch(oldVnode, vnode) {
     if (!oldVnode) {
       //组件的挂载
+      console.log('组件的首次挂载');
       return createElm(vnode);
     } else {
       //判断更新还是渲染
@@ -746,24 +753,116 @@
 
         parentElm.removeChild(oldElm);
         return el;
-      }
-    } //递归创建真实节点，替换掉老的节点
+      } else {
+        //比对两个虚拟节点 进行diff
+        if (oldVnode.tag !== vnode.tag) {
+          //标签不一致 直接替换
+          oldVnode.el.parentNode.replaceChild(createElm(vnode), oldVnode.el);
+        }
 
+        if (!oldVnode.tag) {
+          //文本节点
+          if (oldVnode.text !== vnode.text) {
+            oldVnode.el.textContent = vnode.text;
+          }
+        } //走到这里说明标签一致并且不是文本节点(比对属性是否一致)
+
+
+        var _el = vnode.el = oldVnode.el;
+
+        updatePropertys(vnode, oldVnode.data); //比对子节点
+
+        var oldChildren = oldVnode.children || [];
+        var newChildren = vnode.children || [];
+
+        if (oldChildren.length > 0 && newChildren.length > 0) {
+          //新旧节点都有子节点
+          //比对他们的子节点
+          updateChildren(_el, oldChildren, newChildren);
+        } else if (newChildren.length > 0) {
+          //新节点有子节点 旧节点没有
+          //直接将子节点转换成真实节点插入
+          for (var i = 0; i < newChildren.length; i++) {
+            var child = newChildren[i];
+
+            _el.appendChild(createElm(child));
+          }
+        } else if (oldChildren.length > 0) {
+          //旧节点有子节点 新节点没有子节点 
+          //删除节点
+          for (var _i = 0; _i < oldChildren.length; _i++) {
+            _el.innerHTML = "";
+          }
+        }
+      }
+    }
+  } //比较两个节点 只比较tag和key 都一致就认为他们是同一个节点
+
+  function isSameVnode(oldVnode, newVnode) {
+    return oldVnode.tag === newVnode.tag && oldVnode.key === newVnode.key;
+  }
+
+  function updateChildren(parent, oldChildren, newChildren) {
+    //双指针
+    var oldStartIndex = 0;
+    var oldStartVnode = oldChildren[oldStartIndex];
+    var oldEndIndex = oldChildren.length - 1;
+    oldChildren[oldEndIndex];
+    var newStartIndex = 0;
+    var newStartVnode = newChildren[newStartIndex];
+    var newEndIndex = newChildren.length - 1;
+    newChildren[newEndIndex]; //在比对的过程中 新旧虚拟节点有一方指针重合就结束
+
+    while (oldStartIndex <= oldEndIndex && newStartIndex <= newEndIndex) {
+      if (isSameVnode(oldStartVnode, newStartVnode)) {
+        //命中一:新前新后一致
+        //是同一个节点就比对这两个属性
+        patch(oldStartVnode, newStartVnode);
+        oldStartVnode = oldChildren[++oldStartIndex];
+        newStartVnode = newChildren[++newStartIndex];
+      }
+    }
+
+    if (newStartIndex <= newEndIndex) {
+      for (var i = newStartIndex; i <= newEndIndex; i++) {
+        //将新增的元素直接插入
+        parent.appendChild(createElm(newChildren[i]));
+      }
+    }
   } //更新属性
 
-  function updatePropertys(vnode) {
-    var newProps = vnode.data || {};
+
+  function updatePropertys(vnode, oldProps) {
+    var newProps = vnode.data || {}; //对比style
+
+    var newStyle = newProps.style || {};
+    var oldStyle = oldProps && oldProps.style || {};
+
+    for (var key in oldStyle) {
+      if (!newStyle[key]) {
+        newStyle[key] = '';
+      }
+    } //比对新旧节点的属性
+
+
+    for (var _key in oldProps) {
+      if (!newProps[_key]) {
+        //旧节点有新节点没有 在真实节点中将这个属性删除
+        vnode.el.removeAttribute(_key);
+      }
+    }
+
     var el = vnode.el;
 
-    for (var key in newProps) {
-      if (key === 'style') {
+    for (var _key2 in newProps) {
+      if (_key2 === 'style') {
         for (var styleName in newProps.style) {
           el.style[styleName] = newProps.style[styleName];
         }
-      } else if (key === 'class') {
+      } else if (_key2 === 'class') {
         el["class"] = newProps["class"];
       } else {
-        el.setAttribute(key, newProps[key]);
+        el.setAttribute(_key2, newProps[_key2]);
       }
     }
   } //创建组件的真实节点
@@ -991,7 +1090,7 @@
 
     if (isReservedTag(tag)) {
       //html的原生标签
-      return vnode(tag, data, key, children, undefined);
+      return vnode$1(tag, data, key, children, undefined);
     } else {
       //找到组件的定义 -> 子组件的构造函数
       var Ctor = vm.$options.components[tag];
@@ -1014,19 +1113,19 @@
         child.$mount();
       }
     };
-    return vnode("vue-component-".concat(Ctor.cid, "-").concat(tag), data, key, undefined, {
+    return vnode$1("vue-component-".concat(Ctor.cid, "-").concat(tag), data, key, undefined, {
       Ctor: Ctor,
       children: children
     });
   }
 
   function createTextNode(vm, text) {
-    return vnode(undefined, undefined, undefined, undefined, text);
+    return vnode$1(undefined, undefined, undefined, undefined, text);
   } //生成虚拟节点  虚拟节点 -> 用js描述dom元素
   // 将template转换成ast -> 生成render方法 -> 生成虚拟dom -> 生成真实dom
   //页面更新重新生成虚拟dom -> 更新dom
 
-  function vnode(tag, data, key, children, text, componentOptions) {
+  function vnode$1(tag, data, key, children, text, componentOptions) {
     return {
       tag: tag,
       data: data,
@@ -1083,11 +1182,11 @@
 
   function initExtend(Vue) {
     //子类和父类 对应子组件和父组件
-    //创建子类继承于父类宽展的时候都扩展到自己的属性上
+    //创建子类继承于父类扩展展的时候都扩展到自己的属性上
     var cid = 0;
 
     Vue.extend = function (opts) {
-      // extend方法就是产生一个继承于Vue的类
+      // 产生一个基于vue的子类
       // 并且身上应该有父类的所有功能 
       var Super = this;
 
@@ -1098,8 +1197,7 @@
 
       Sub.prototype = Object.create(Super.prototype);
       Sub.prototype.constructor = Sub;
-      Sub.options = mergeOptions$1(Super.options, opts); // 只和Vue.options合并
-
+      Sub.options = mergeOptions$1(Super.options, opts);
       Sub.cid = cid++;
       return Sub;
     };
@@ -1135,6 +1233,27 @@
   renderMixin(Vue);
   lifecycleMixin(Vue);
   initGolbalAPI(Vue);
+  var vm1 = new Vue({
+    data: {
+      name: 'hello'
+    }
+  });
+  var render = compileToFunction("<div id=\"app\" a=\"1\">\n  <div key=\"A\" style=\"background:red\">A</div>\n  <div style=\"background:yellow\" key=\"B\">B</div>\n  <div style=\"background:blue\" key=\"C\">C</div>\n  <div style=\"background:pink\" key=\"D\">D</div>\n</div>");
+  var vnode = render.call(vm1);
+  var el = createElm(vnode);
+  document.body.appendChild(el);
+  var vm2 = new Vue({
+    data: {
+      name: 'lxh',
+      age: 25
+    }
+  });
+  var render2 = compileToFunction("<div id=\"aaa\" b=\"2\">\n   <div  key=\"A\" style=\"background:red\">A</div>\n   <div style=\"background:yellow\" key=\"B\">B</div>\n   <div style=\"background:blue\" key=\"C\">C</div>\n   <div style=\"background:pink\" key=\"D\">D</div>\n   <div style=\"background:skyblue\" key=\"E\">E</div>\n</div>");
+  var newVnode = render2.call(vm2); //新旧节点做比对
+
+  setTimeout(function () {
+    patch(vnode, newVnode);
+  }, 1000);
 
   return Vue;
 

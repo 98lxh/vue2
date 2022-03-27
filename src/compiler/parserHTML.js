@@ -96,15 +96,19 @@ export function parserHTML(html) {
     }
 
     //处理style
-    const styleIdx = attrStr.indexOf('style')
+    const styleStartIdx = attrStr.indexOf('style')
     let styleStr;
-    if (styleIdx !== -1) {
-      styleStr = attrStr.slice(styleIdx, attrStr.length - 1)
-      attrStr = attrStr.slice(0, styleIdx)
+    if (styleStartIdx !== -1) {
+      //style开始到结尾的字符串
+      styleStr = attrStr.slice(styleStartIdx, attrStr.length - 1)
+      const styleEndIndex = styleStr.indexOf(" ")
+      if(styleEndIndex !== -1){
+        styleStr = styleStr.slice(0,styleEndIndex)
+        attrStr = attrStr.split(styleStr).join("")
+      }
     }
 
     const attrArr = attrStr ? attrStr.trim().split(' ') : [];
-
     //解析成一个属性字符串
     const attrs = parserAttrs([...attrArr, styleStr])
     return {

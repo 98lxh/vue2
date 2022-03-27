@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <script src="/dist/umd/vue.js"></script>
+  <script>
+    //默认有一个列表 可以每次渲染的时候进行比对
+    //每次进行比对 如果可以复用就进行复用
+    // dom-diff -> vnode属性少(tag,data,children,key) 真实的dom节点属性很多的如果用真实节点进行diff性能消耗很大
+
+
+    //diff算法的特点:平级比对(正常操作dom很少有把父节点变成子节点 或者子节点变成父节点)
+    //1.标签名不同 直接替换
+    //2.是不文字节点 是的话替换textContent
+    //3.对比属性
+    //4.对比子节点:
+    //         <1>新节点有子节点 旧节点没有子节点 使用createElm方法将子节点转换成真实节点并出入
+    //         <2>新节点没有子节点 旧节点有子节点 删除后子节点 el.innerHTML = ""
+    //         <3>新旧节点都有子节点:
+    //            vue采用双指针的方式实现 vue在内部也做了一些优化策略
+    // 新旧都有节点优化:
+    // 1.
+  </script>
+</body>
+
+</html>

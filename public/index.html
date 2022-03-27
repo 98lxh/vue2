@@ -9,35 +9,9 @@
 </head>
 
 <body>
-  <div id="app">
-    {{name}}
-    <my-component></my-component>
-    <my-component></my-component>
-    <my-component></my-component>
-  </div>
   <script src="/dist/umd/vue.js"></script>
   <script>
-
-    const vm = new Vue({
-      el: '#app',
-      data() {
-        return {
-          name: 'lxh',
-        }
-      },
-      components: {
-        'my-component': {
-          data(){
-            return {
-              test:'child Component'
-            }
-          },
-          template: `<div id='xx'>{{ test }}</div>`
-        }
-      }
-    })
-
-    console.log(vm)
+    
   </script>
 </body>
 
