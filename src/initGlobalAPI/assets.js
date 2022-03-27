@@ -18,6 +18,7 @@ export function initAssetsRegister(Vue){
       }
 
       this.options[type + 's'][id] = definition
+
     }
   })
 }

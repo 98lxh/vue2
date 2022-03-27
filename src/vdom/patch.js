@@ -3,20 +3,25 @@
  * 老节点和新节点做比对diff
 */
 export function patch(oldVnode, vnode) {
-  //判断更新还是渲染
-  const isRealElement = oldVnode.nodeType;
-  if (isRealElement) {
-    console.log('当前旧节点是真实节点,进入首次渲染')
-    //初次渲染
-    const oldElm = oldVnode;
-    const parentElm = oldElm.parentNode // body
-    let el = createElm(vnode)
-    //挂载
-    parentElm.insertBefore(el, oldElm.nextSibling)
-    //删除旧的节点
-    parentElm.removeChild(oldElm)
+  if (!oldVnode) {
+    //组件的挂载
+    return createElm(vnode)
+  } else {
+    //判断更新还是渲染
+    const isRealElement = oldVnode.nodeType;
+    if (isRealElement) {
+      console.log('当前旧节点是真实节点,进入首次渲染')
+      //初次渲染
+      const oldElm = oldVnode;
+      const parentElm = oldElm.parentNode // body
+      let el = createElm(vnode)
+      //挂载
+      parentElm.insertBefore(el, oldElm.nextSibling)
+      //删除旧的节点
+      parentElm.removeChild(oldElm)
 
-    return el
+      return el
+    }
   }
 
   //递归创建真实节点，替换掉老的节点
@@ -40,11 +45,33 @@ function updatePropertys(vnode) {
 }
 
 
+//创建组件的真实节点
+function createComponent(vnode) { //初始化组件
+  //创建组件的实例
+  let i = vnode.data
+  if ((i = i.hooks) && (i = i.init)) {
+    i(vnode)
+  }
+
+  if(vnode.componentInstance){
+    return true
+  }
+}
+
+
 //根据虚拟节点创建真实的节点
 function createElm(vnode) {
   const { tag, children, key, data, text } = vnode
   //区分标签和文本
   if (typeof tag === 'string') {
+
+    //tag为字符串的情况也有可能是组件标签
+
+    //实例化组件
+    if (createComponent(vnode)) {
+      return vnode.componentInstance.$el
+    }
+
     vnode.el = document.createElement(tag);
     updatePropertys(vnode)
     children.forEach(child => {

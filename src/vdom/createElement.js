@@ -1,12 +1,45 @@
-export function createElement(tag, data = {}, ...children) {
+import { isObject } from "../utils/index";
+import { isReservedTag } from "../utils/isReservedTag";
+
+export function createElement(vm, tag, data = {}, ...children) {
   let key = data.key;
   if (key) {
     delete data.key
   }
-  return vnode(tag, data, key, children, undefined)
+
+  if (isReservedTag(tag)) { //html的原生标签
+    return vnode(tag, data, key, children, undefined)
+  } else {
+    //找到组件的定义 -> 子组件的构造函数
+    const Ctor = vm.$options.components[tag]
+
+    return createComponent(vm, tag, data, key, children, Ctor)
+  }
+
 }
 
-export function createTextNode(text) {
+//创建组件的虚拟节点
+function createComponent(vm, tag, data, key, children, Ctor) {
+  if (isObject(Ctor)) {
+    Ctor = vm.$options._base.extend(Ctor)
+  }
+
+  //组件钩子
+  data.hooks = {
+    init(vnode) {
+      let child = vnode.componentInstance = new Ctor({ _isComponent: true })
+      console.log(child)
+      child.$mount()
+    }
+  }
+
+  return vnode(`vue-component-${Ctor.cid}-${tag}`, data, key, undefined, {
+    Ctor,
+    children
+  })
+}
+
+export function createTextNode(vm, text) {
   return vnode(undefined, undefined, undefined, undefined, text)
 }
 
@@ -17,12 +50,13 @@ export function createTextNode(text) {
 
 //页面更新重新生成虚拟dom -> 更新dom
 
-function vnode(tag, data, key, children, text) {
+function vnode(tag, data, key, children, text, componentOptions) {
   return {
     tag,
     data,
     key,
     children,
-    text
+    text,
+    componentOptions
   }
 }

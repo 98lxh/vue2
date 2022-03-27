@@ -12,12 +12,12 @@
   <div id="app">
     {{name}}
     <my-component></my-component>
+    <my-component></my-component>
+    <my-component></my-component>
   </div>
   <script src="/dist/umd/vue.js"></script>
   <script>
-    Vue.component('my-component1', {
-      template: `<div>hello word</div>`
-    })
+
     const vm = new Vue({
       el: '#app',
       data() {
@@ -27,7 +27,7 @@
       },
       components: {
         'my-component': {
-          template: `<div>hello 子组件</div>`
+          template: `<div id='xx'>hello子组件</div>`
         }
       }
     })

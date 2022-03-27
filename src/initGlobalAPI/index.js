@@ -2,7 +2,6 @@ import { initAssetsRegister } from './assets'
 import { ASSETS_TYPE } from './const'
 import { initExtend } from './initExtend'
 import { initMixin } from './mixin'
-
 export function initGolbalAPI(Vue){
   //整合了全局相关的内容
   Vue.options = {}
@@ -16,6 +15,6 @@ export function initGolbalAPI(Vue){
   //_base是Vue的构造函数
   Vue.options._base = Vue
   //注册extend方法
-  initExtend(Vue)
   initAssetsRegister(Vue)
+  initExtend(Vue)
 }

@@ -9,6 +9,11 @@ function gen(node) {
     while (text.trim()) {
       //文本的结束位置
       const textEndIndex = text.indexOf("{{")
+
+      if(textEndIndex === -1){
+        return `_v("${text}")`
+      }
+
       if (textEndIndex === 0) {
         //表达式的结束位置
         const execEndIndex = text.indexOf("}}")
@@ -36,6 +41,5 @@ function genChildren(el) {
 export function generate(el) {
   const children = genChildren(el);
   let code = `_c("${el.tag}",${el.attrs}${children ? `,${children}` : ''})`
-
   return code
 }

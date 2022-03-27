@@ -42,9 +42,10 @@ function mergeAssets(parentVal,childVal){
   const res = Object.create(parentVal);
   if(childVal){
     for(let key in childVal){
-      res[key] = childVal
+      res[key] = childVal[key]
     }
   }
+
   return res
 }
 
@@ -83,5 +84,8 @@ export function mergeOptions(parent,child){
     }
   }
 
+  // if(options._isComponent){
+  //   console.log(options,child,parent)
+  // }
   return options
 }

@@ -15,7 +15,6 @@ export function initMixin(Vue) {
     const vm = this;
     //将用户传递的和全局的做合并
     vm.$options = mergeOptions(vm.constructor.options, options);
-
     //这里调用里beforeCreate 这个阶段合并了选项 但是还没有执行initState 所有数据还没有被观察
     callHook(vm, "beforeCreate")
     //初始化状态
@@ -32,6 +31,7 @@ export function initMixin(Vue) {
   Vue.prototype.$mount = function (el) {
     const vm = this;
     const options = vm.$options;
+    console.log(options)
     el = document.querySelector(el);
     //模板转换成渲染函数
     if (!options.render) {
@@ -40,9 +40,9 @@ export function initMixin(Vue) {
       if (!template && el) {
         //没有template 取el的内容作为模板
         template = el.outerHTML
-        let render = compileToFunction(template);
-        options.render = render
       }
+      let render = compileToFunction(template);
+      options.render = render
     }
 
     mountComponent(vm, el);

@@ -1,24 +1,21 @@
 import { mergeOptions } from "../utils/merge";
 
-export function initExtend(Vue){
+export function initExtend(Vue) {
 
   //子类和父类 对应子组件和父组件
   //创建子类继承于父类宽展的时候都扩展到自己的属性上
-  Vue.extend = function (extendOptions){
-    
-    const Sub = function VueComponent(options){
-      this._init(options)
+  let cid = 0;
+  Vue.extend = function (opts) { // extend方法就是产生一个继承于Vue的类
+    // 并且身上应该有父类的所有功能 
+    const Super = this
+    const Sub = function VueComponent(options) {
+      this._init(options);
     }
-
-    //继承父类
-    Sub.prototype = Object.create(this.prototype)
-    //这种方式继承会改变子类构造函数 需要手动指回
-    Sub.constructor = Sub;
-
-    //子类属性和父类属性做合并
-    Sub.options = mergeOptions(this.options,extendOptions)
-    Sub.mixin = this.mixin
-    Sub.component = this.component
-    return Sub
+    // 原型继承
+    Sub.prototype = Object.create(Super.prototype);
+    Sub.prototype.constructor = Sub;
+    Sub.options = mergeOptions(Super.options, opts);// 只和Vue.options合并
+    Sub.cid = cid++
+    return Sub;
   }
 }

@@ -7,11 +7,11 @@ export function renderMixin(Vue) {
   // _sJSON.stringify()
   Vue.prototype._c = function () {
     // tag data children
-    return createElement(...arguments)
+    return createElement(this,...arguments)
   }
 
   Vue.prototype._v = function (text) {
-    return createTextNode(text)
+    return createTextNode(this,text)
   }
 
   Vue.prototype._s = function (value) {
