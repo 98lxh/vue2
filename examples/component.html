@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="app">
+    Hello I'm Parent Component
+    <child-component></child-component>
+  </div>
+  <script src="./../dist/umd/vue.js"></script>
+  <script>
+    /**
+     * 组件渲染的时候回调用当前组件对应的构造函数 产生一个实例
+     * 
+     * 每个组件在使用使用时候都会调用Vue.extend方法 创建一个构造函数
+     * 
+     * 实例化子组件时会将当前的选项和自定义的选项合并(mergeOption)
+     * 
+     * 通过创建实例 内部会调用子类的_init方法 内部会在创建一个渲染watcher 将渲染后的结果放到vm.$el上
+     * 
+     * **/
+    const vm = new Vue({
+      el: "#app",
+      beforeCreate() {
+        console.log('outer beforeCreate')
+      },
+      created() {
+        console.log('outer created')
+      },
+      beforeMount() {
+        console.log('outer beforeMount')
+      },
+      mounted() {
+        console.log('outer mounted')
+      },
+      components: {
+        'child-component': {
+          template: `<div style="color:red">Hello I'm Child Compoent</div>`,
+          beforeCreate() {
+            console.log('inner beforeCreate')
+          },
+          created() {
+            console.log('inner created')
+          },
+          beforeMount() {
+            console.log('inner beforeMounted')
+          },
+          mounted() {
+            console.log('inner mounted')
+          },
+        }
+      }
+    })
+  </script>
+</body>
+
+</html>

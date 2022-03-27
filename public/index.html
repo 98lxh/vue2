@@ -27,7 +27,12 @@
       },
       components: {
         'my-component': {
-          template: `<div id='xx'>hello子组件</div>`
+          data(){
+            return {
+              test:'child Component'
+            }
+          },
+          template: `<div id='xx'>{{ test }}</div>`
         }
       }
     })
