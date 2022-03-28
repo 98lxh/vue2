@@ -82,10 +82,24 @@ function updateChildren(parent, oldChildren, newChildren) {
   let newStartVnode = newChildren[newStartIndex]
   let newEndIndex = newChildren.length - 1;
   let newEndVnode = newChildren[newEndIndex]
-
+  const makeIndexByKey = (children) => {
+    let map = {};
+    children.forEach((item, index) => {
+      if (item.key) {
+        //根据key创建一个映射表
+        map[item.key] = index
+      }
+    })
+    return map
+  }
+  let map = makeIndexByKey(oldChildren)
   //在比对的过程中 新旧虚拟节点有一方指针重合就结束
   while (oldStartIndex <= oldEndIndex && newStartIndex <= newEndIndex) {
-    if (isSameVnode(oldStartVnode, newStartVnode)) {
+    if (!oldStartVnode) { //旧指针移动过程中可能碰到undefined 遇到就直接跳过
+      oldStartVnode = oldChildren[++oldStartIndex]
+    } else if (!oldEndVnode) {
+      oldEndVnode = oldChildren[--oldEndIndex]
+    } else if (isSameVnode(oldStartVnode, newStartVnode)) {
       //命中一:新前新后一致 优化向后插入的情况
       //是同一个节点就比对这两个属性
       patch(oldStartVnode, newStartVnode)
@@ -108,6 +122,24 @@ function updateChildren(parent, oldChildren, newChildren) {
       parent.insertBefore(oldEndVnode.el, oldStartVnode.el);
       oldEndVnode = oldChildren[--oldEndIndex]
       newStartVnode = newChildren[++newStartIndex]
+    } else {
+      //以上情况都没有命中 乱序
+      //先根据老节点的key做一个映射表 拿新的虚拟节点去映射表中查找 则进行移动操作，
+      //如果找不到则直接将元素插入
+      let moveIndex = map[newStartIndex.key];
+      if (!moveIndex) {
+        //没有找到不需要复用
+        //创建节点插入
+        parent.insertBefore(createElm(newStartVnode), oldStartVnode.el)
+      } else {
+        //如果在映射表中找到了 需要把这个元素移走 并且当前位置置空
+        let moveVnode = oldChildren[moveIndex]
+        oldChildren[moveIndex] = undefined
+        parent.insertBefore(moveVnode.el, oldStartVnode.el)
+        patch(moveVnode, oldStartVnode)
+      }
+
+      newStartVnode = newChildren[++newStartIndex]
     }
   }
 
@@ -120,6 +152,12 @@ function updateChildren(parent, oldChildren, newChildren) {
       */
       let flag = newChildren[newEndIndex + 1] == null ? null : newChildren[newEndIndex + 1].el;
       parent.insertBefore(createElm(newChildren[i]), flag)
+    }
+  }
+
+  if (oldStartIndex <= oldEndIndex) {
+    for (let i = oldStartIndex; i <= oldEndIndex; i++) {
+      parent.removeChild(oldChildren[i].el)
     }
   }
 }

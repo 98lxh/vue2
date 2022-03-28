@@ -811,10 +811,28 @@
     var newStartIndex = 0;
     var newStartVnode = newChildren[newStartIndex];
     var newEndIndex = newChildren.length - 1;
-    var newEndVnode = newChildren[newEndIndex]; //在比对的过程中 新旧虚拟节点有一方指针重合就结束
+    var newEndVnode = newChildren[newEndIndex];
+
+    var makeIndexByKey = function makeIndexByKey(children) {
+      var map = {};
+      children.forEach(function (item, index) {
+        if (item.key) {
+          //根据key创建一个映射表
+          map[item.key] = index;
+        }
+      });
+      return map;
+    };
+
+    var map = makeIndexByKey(oldChildren); //在比对的过程中 新旧虚拟节点有一方指针重合就结束
 
     while (oldStartIndex <= oldEndIndex && newStartIndex <= newEndIndex) {
-      if (isSameVnode(oldStartVnode, newStartVnode)) {
+      if (!oldStartVnode) {
+        //旧指针移动过程中可能碰到undefined 遇到就直接跳过
+        oldStartVnode = oldChildren[++oldStartIndex];
+      } else if (!oldEndVnode) {
+        oldEndVnode = oldChildren[--oldEndIndex];
+      } else if (isSameVnode(oldStartVnode, newStartVnode)) {
         //命中一:新前新后一致 优化向后插入的情况
         //是同一个节点就比对这两个属性
         patch(oldStartVnode, newStartVnode);
@@ -837,6 +855,25 @@
         parent.insertBefore(oldEndVnode.el, oldStartVnode.el);
         oldEndVnode = oldChildren[--oldEndIndex];
         newStartVnode = newChildren[++newStartIndex];
+      } else {
+        //以上情况都没有命中 乱序
+        //先根据老节点的key做一个映射表 拿新的虚拟节点去映射表中查找 则进行移动操作，
+        //如果找不到则直接将元素插入
+        var moveIndex = map[newStartIndex.key];
+
+        if (!moveIndex) {
+          //没有找到不需要复用
+          //创建节点插入
+          parent.insertBefore(createElm(newStartVnode), oldStartVnode.el);
+        } else {
+          //如果在映射表中找到了 需要把这个元素移走 并且当前位置置空
+          var moveVnode = oldChildren[moveIndex];
+          oldChildren[moveIndex] = undefined;
+          parent.insertBefore(moveVnode.el, oldStartVnode.el);
+          patch(moveVnode, oldStartVnode);
+        }
+
+        newStartVnode = newChildren[++newStartIndex];
       }
     }
 
@@ -850,6 +887,12 @@
         */
         var flag = newChildren[newEndIndex + 1] == null ? null : newChildren[newEndIndex + 1].el;
         parent.insertBefore(createElm(newChildren[i]), flag);
+      }
+    }
+
+    if (oldStartIndex <= oldEndIndex) {
+      for (var _i2 = oldStartIndex; _i2 <= oldEndIndex; _i2++) {
+        parent.removeChild(oldChildren[_i2].el);
       }
     }
   } //更新属性
@@ -934,8 +977,17 @@
 
   function lifecycleMixin(Vue) {
     Vue.prototype._update = function (vnode) {
-      var vm = this;
-      vm.$el = patch(vm.$el, vnode);
+      var vm = this; //虚拟节点对应的内容
+      //第一次不需要diff
+
+      var prevVNode = vm._vnode;
+      vm._vnode = vnode;
+
+      if (!prevVNode) {
+        vm.$el = patch(vm.$el, vnode);
+      } else {
+        vm.$el = patch(prevVNode, vnode);
+      }
     };
   }
   function mountComponent(vm, el) {
@@ -1111,7 +1163,7 @@
 
     if (isReservedTag(tag)) {
       //html的原生标签
-      return vnode$1(tag, data, key, children, undefined);
+      return vnode(tag, data, key, children, undefined);
     } else {
       //找到组件的定义 -> 子组件的构造函数
       var Ctor = vm.$options.components[tag];
@@ -1134,19 +1186,19 @@
         child.$mount();
       }
     };
-    return vnode$1("vue-component-".concat(Ctor.cid, "-").concat(tag), data, key, undefined, {
+    return vnode("vue-component-".concat(Ctor.cid, "-").concat(tag), data, key, undefined, {
       Ctor: Ctor,
       children: children
     });
   }
 
   function createTextNode(vm, text) {
-    return vnode$1(undefined, undefined, undefined, undefined, text);
+    return vnode(undefined, undefined, undefined, undefined, text);
   } //生成虚拟节点  虚拟节点 -> 用js描述dom元素
   // 将template转换成ast -> 生成render方法 -> 生成虚拟dom -> 生成真实dom
   //页面更新重新生成虚拟dom -> 更新dom
 
-  function vnode$1(tag, data, key, children, text, componentOptions) {
+  function vnode(tag, data, key, children, text, componentOptions) {
     return {
       tag: tag,
       data: data,
@@ -1253,28 +1305,7 @@
   initMixin$1(Vue);
   renderMixin(Vue);
   lifecycleMixin(Vue);
-  initGolbalAPI(Vue);
-  var vm1 = new Vue({
-    data: {
-      name: 'hello'
-    }
-  });
-  var render = compileToFunction("<div id=\"app\" a=\"1\">\n  <div key=\"1\" style=\"background:red\">1</div>\n  <div style=\"background:yellow\" key=\"2\">2</div>\n  <div style=\"background:blue\" key=\"3\">3</div>\n  <div style=\"background:pink\" key=\"4\">4<div>\n</div>");
-  var vnode = render.call(vm1);
-  var el = createElm(vnode);
-  document.body.appendChild(el);
-  var vm2 = new Vue({
-    data: {
-      name: 'lxh',
-      age: 25
-    }
-  });
-  var render2 = compileToFunction("<div id=\"aaa\" b=\"2\">\n   <div style=\"background:pink\" key=\"4\">4</div>\n   <div  key=\"3\" style=\"background:red\">3</div>\n   <div style=\"background:yellow\" key=\"2\">2</div>\n   <div style=\"background:blue\" key=\"1\">1</div>\n</div>");
-  var newVnode = render2.call(vm2); //新旧节点做比对
-
-  setTimeout(function () {
-    patch(vnode, newVnode);
-  }, 1000);
+  initGolbalAPI(Vue); // let vm1 = new Vue({
 
   return Vue;
 

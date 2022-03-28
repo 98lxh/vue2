@@ -5,7 +5,15 @@ import { patch } from "./vdom/patch";
 export function lifecycleMixin(Vue) {
   Vue.prototype._update = function (vnode) {
     const vm = this;
-    vm.$el = patch(vm.$el, vnode)
+    //虚拟节点对应的内容
+    //第一次不需要diff
+    const prevVNode = vm._vnode
+    vm._vnode = vnode
+    if (!prevVNode) {
+      vm.$el = patch(vm.$el, vnode)
+    } else {
+      vm.$el = patch(prevVNode, vnode)
+    }
   }
 }
 
@@ -29,7 +37,7 @@ export function mountComponent(vm, el) {
 
 export function callHook(vm, hook) {
   const handlers = vm.$options[hook]
-  if(!handlers) return
+  if (!handlers) return
   //找到对应的钩子调用
   for (let i = 0; i < handlers.length; i++) {
     handlers[i].call(vm)

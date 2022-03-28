@@ -9,6 +9,10 @@
 </head>
 
 <body>
+  <div id="app">
+    <div>hello</div>
+    <span>{{name}}</span>
+  </div>
   <script src="/dist/umd/vue.js"></script>
   <script>
     //默认有一个列表 可以每次渲染的时候进行比对
@@ -26,7 +30,26 @@
     //         <3>新旧节点都有子节点:
     //            vue采用双指针的方式实现 vue在内部也做了一些优化策略
     // 新旧都有节点优化:
-    // 1.
+    // 1.新前和旧前对比 优化尾部插入
+    // 2.新后和旧后对比 优化头部插入
+    // 3.新后和旧前对比 优化头部移动到尾部  倒序变正序
+    // 4.新前和旧后对比 优化尾部移动到头部  正序变倒序
+
+    // diff中的key作为一个节点的唯一标识  当diff的时候会对比标签名和key是否一致 一致则认为他们是同一节点
+
+    let vm = new Vue({
+      el:'#app',
+      data(){
+        return {
+          name:'word'
+        }
+      },
+      created(){
+        setTimeout(()=>{
+          this.name = 'diff'
+        },3000)
+      }
+    })
   </script>
 </body>
 
