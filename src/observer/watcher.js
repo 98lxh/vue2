@@ -22,11 +22,8 @@ class Watcher {
       this.getter = function () {
         let path = expOrFn.split('.')
         let obj = vm;
-        for (let i = 0; i < path.length; i++) {
-          obj = obj[path[i]]
-        }
         //有可能是是xx.xx这种多层嵌套的
-        return obj
+        return path.reduce((prev, next) => prev[next], obj)
       }
     } else {
       this.getter = expOrFn;
@@ -66,7 +63,7 @@ class Watcher {
     //保证上一次的新值是下一次的旧值
     this.value = newValue
     if (this.user) {
-      this.callback.call(this.vm,newValue, oldValue)
+      this.callback.call(this.vm, newValue, oldValue)
     }
   }
 }

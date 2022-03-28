@@ -662,14 +662,11 @@
         //将表达式转换成函数 数据取值时进行依赖收集
         this.getter = function () {
           var path = expOrFn.split('.');
-          var obj = vm;
+          var obj = vm; //有可能是是xx.xx这种多层嵌套的
 
-          for (var i = 0; i < path.length; i++) {
-            obj = obj[path[i]];
-          } //有可能是是xx.xx这种多层嵌套的
-
-
-          return obj;
+          return path.reduce(function (prev, next) {
+            return prev[next];
+          }, obj);
         };
       } else {
         this.getter = expOrFn;
