@@ -86,19 +86,41 @@ function updateChildren(parent, oldChildren, newChildren) {
   //在比对的过程中 新旧虚拟节点有一方指针重合就结束
   while (oldStartIndex <= oldEndIndex && newStartIndex <= newEndIndex) {
     if (isSameVnode(oldStartVnode, newStartVnode)) {
-      //命中一:新前新后一致
+      //命中一:新前新后一致 优化向后插入的情况
       //是同一个节点就比对这两个属性
       patch(oldStartVnode, newStartVnode)
       oldStartVnode = oldChildren[++oldStartIndex]
+      newStartVnode = newChildren[++newStartIndex]
+    } else if (isSameVnode(oldEndVnode, newEndVnode)) {
+      //命中二:新后与旧后一直，优化向前插入的情况
+      patch(oldEndVnode, newEndVnode)
+      oldEndVnode = oldChildren[--oldEndIndex]
+      newEndVnode = newChildren[--newEndIndex]
+    } else if (isSameVnode(oldStartVnode, newEndVnode)) {
+      //命中三:新后与旧前 优化头部移动到尾部 倒序变正序
+      patch(oldStartVnode, newEndVnode)
+      parent.insertBefore(oldStartVnode.el, oldEndVnode.el.nextSibling)
+      oldStartVnode = oldChildren[++oldStartIndex]
+      newEndVnode = newChildren[--newEndIndex]
+    } else if (isSameVnode(oldEndVnode, newStartVnode)) {
+      //命中四:新前与旧后 优化尾部移动到头部 正序变倒序
+      patch(oldEndVnode, newStartVnode)
+      parent.insertBefore(oldEndVnode.el, oldStartVnode.el);
+      oldEndVnode = oldChildren[--oldEndIndex]
       newStartVnode = newChildren[++newStartIndex]
     }
   }
 
   if (newStartIndex <= newEndIndex) {
-    for (let i = newStartIndex; i <= newEndIndex;i++) {
-      //将新增的元素直接插入
-      parent.appendChild(createElm(newChildren[i]))
-     }
+    for (let i = newStartIndex; i <= newEndIndex; i++) {
+      //将新增的元素直接插入(可能是向后插入 也有可能从头插入)
+      /**
+       * 如果是向后添加了元素 那么newEndIndex + 1 一定是null
+       * 如果是向前添加了元素 那么newEndIndex - 1 可以作为flag插入到他的前边即可
+      */
+      let flag = newChildren[newEndIndex + 1] == null ? null : newChildren[newEndIndex + 1].el;
+      parent.insertBefore(createElm(newChildren[i]), flag)
+    }
   }
 }
 
@@ -154,7 +176,7 @@ function createComponent(vnode) { //初始化组件
 
 //根据虚拟节点创建真实的节点
 export function createElm(vnode) {
-  const { tag, children, key, data, text } = vnode
+  const { tag, children, text } = vnode
   //区分标签和文本
   if (typeof tag === 'string') {
 

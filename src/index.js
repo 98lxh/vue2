@@ -24,10 +24,10 @@ let vm1 = new Vue({
 })
 
 let render = compileToFunction(`<div id="app" a="1">
-  <div key="A" style="background:red">A</div>
-  <div style="background:yellow" key="B">B</div>
-  <div style="background:blue" key="C">C</div>
-  <div style="background:pink" key="D">D</div>
+  <div key="1" style="background:red">1</div>
+  <div style="background:yellow" key="2">2</div>
+  <div style="background:blue" key="3">3</div>
+  <div style="background:pink" key="4">4<div>
 </div>`)
 let vnode = render.call(vm1)
 let el = createElm(vnode)
@@ -40,11 +40,10 @@ let vm2 = new Vue({
   }
 })
 let render2 = compileToFunction(`<div id="aaa" b="2">
-   <div  key="A" style="background:red">A</div>
-   <div style="background:yellow" key="B">B</div>
-   <div style="background:blue" key="C">C</div>
-   <div style="background:pink" key="D">D</div>
-   <div style="background:skyblue" key="E">E</div>
+   <div style="background:pink" key="4">4</div>
+   <div  key="3" style="background:red">3</div>
+   <div style="background:yellow" key="2">2</div>
+   <div style="background:blue" key="1">1</div>
 </div>`)
 let newVnode = render2.call(vm2)
 

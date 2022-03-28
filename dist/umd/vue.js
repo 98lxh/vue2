@@ -807,26 +807,49 @@
     var oldStartIndex = 0;
     var oldStartVnode = oldChildren[oldStartIndex];
     var oldEndIndex = oldChildren.length - 1;
-    oldChildren[oldEndIndex];
+    var oldEndVnode = oldChildren[oldEndIndex];
     var newStartIndex = 0;
     var newStartVnode = newChildren[newStartIndex];
     var newEndIndex = newChildren.length - 1;
-    newChildren[newEndIndex]; //在比对的过程中 新旧虚拟节点有一方指针重合就结束
+    var newEndVnode = newChildren[newEndIndex]; //在比对的过程中 新旧虚拟节点有一方指针重合就结束
 
     while (oldStartIndex <= oldEndIndex && newStartIndex <= newEndIndex) {
       if (isSameVnode(oldStartVnode, newStartVnode)) {
-        //命中一:新前新后一致
+        //命中一:新前新后一致 优化向后插入的情况
         //是同一个节点就比对这两个属性
         patch(oldStartVnode, newStartVnode);
         oldStartVnode = oldChildren[++oldStartIndex];
+        newStartVnode = newChildren[++newStartIndex];
+      } else if (isSameVnode(oldEndVnode, newEndVnode)) {
+        //命中二:新后与旧后一直，优化向前插入的情况
+        patch(oldEndVnode, newEndVnode);
+        oldEndVnode = oldChildren[--oldEndIndex];
+        newEndVnode = newChildren[--newEndIndex];
+      } else if (isSameVnode(oldStartVnode, newEndVnode)) {
+        //命中三:新后与旧前 优化头部移动到尾部 倒序变正序
+        patch(oldStartVnode, newEndVnode);
+        parent.insertBefore(oldStartVnode.el, oldEndVnode.el.nextSibling);
+        oldStartVnode = oldChildren[++oldStartIndex];
+        newEndVnode = newChildren[--newEndIndex];
+      } else if (isSameVnode(oldEndVnode, newStartVnode)) {
+        //命中四:新前与旧后 优化尾部移动到头部 正序变倒序
+        patch(oldEndVnode, newStartVnode);
+        parent.insertBefore(oldEndVnode.el, oldStartVnode.el);
+        oldEndVnode = oldChildren[--oldEndIndex];
         newStartVnode = newChildren[++newStartIndex];
       }
     }
 
     if (newStartIndex <= newEndIndex) {
       for (var i = newStartIndex; i <= newEndIndex; i++) {
-        //将新增的元素直接插入
-        parent.appendChild(createElm(newChildren[i]));
+        //将新增的元素直接插入(可能是向后插入 也有可能从头插入)
+
+        /**
+         * 如果是向后添加了元素 那么newEndIndex + 1 一定是null
+         * 如果是向前添加了元素 那么newEndIndex - 1 可以作为flag插入到他的前边即可
+        */
+        var flag = newChildren[newEndIndex + 1] == null ? null : newChildren[newEndIndex + 1].el;
+        parent.insertBefore(createElm(newChildren[i]), flag);
       }
     }
   } //更新属性
@@ -885,10 +908,8 @@
 
   function createElm(vnode) {
     var tag = vnode.tag,
-        children = vnode.children;
-        vnode.key;
-        vnode.data;
-        var text = vnode.text; //区分标签和文本
+        children = vnode.children,
+        text = vnode.text; //区分标签和文本
 
     if (typeof tag === 'string') {
       //tag为字符串的情况也有可能是组件标签
@@ -1238,7 +1259,7 @@
       name: 'hello'
     }
   });
-  var render = compileToFunction("<div id=\"app\" a=\"1\">\n  <div key=\"A\" style=\"background:red\">A</div>\n  <div style=\"background:yellow\" key=\"B\">B</div>\n  <div style=\"background:blue\" key=\"C\">C</div>\n  <div style=\"background:pink\" key=\"D\">D</div>\n</div>");
+  var render = compileToFunction("<div id=\"app\" a=\"1\">\n  <div key=\"1\" style=\"background:red\">1</div>\n  <div style=\"background:yellow\" key=\"2\">2</div>\n  <div style=\"background:blue\" key=\"3\">3</div>\n  <div style=\"background:pink\" key=\"4\">4<div>\n</div>");
   var vnode = render.call(vm1);
   var el = createElm(vnode);
   document.body.appendChild(el);
@@ -1248,7 +1269,7 @@
       age: 25
     }
   });
-  var render2 = compileToFunction("<div id=\"aaa\" b=\"2\">\n   <div  key=\"A\" style=\"background:red\">A</div>\n   <div style=\"background:yellow\" key=\"B\">B</div>\n   <div style=\"background:blue\" key=\"C\">C</div>\n   <div style=\"background:pink\" key=\"D\">D</div>\n   <div style=\"background:skyblue\" key=\"E\">E</div>\n</div>");
+  var render2 = compileToFunction("<div id=\"aaa\" b=\"2\">\n   <div style=\"background:pink\" key=\"4\">4</div>\n   <div  key=\"3\" style=\"background:red\">3</div>\n   <div style=\"background:yellow\" key=\"2\">2</div>\n   <div style=\"background:blue\" key=\"1\">1</div>\n</div>");
   var newVnode = render2.call(vm2); //新旧节点做比对
 
   setTimeout(function () {
