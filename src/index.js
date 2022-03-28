@@ -2,8 +2,8 @@ import { initMixin } from "./init";
 import { renderMixin } from "./render";
 import { lifecycleMixin } from './lifecycle'
 import { initGolbalAPI } from "./initGlobalAPI/index";
-import { compileToFunction } from "./compiler/index";
-import { createElm, patch } from "./vdom/patch";
+import { stateMixin } from "./state";
+
 //核心
 function Vue(options) {
   //进行初始化
@@ -14,9 +14,12 @@ function Vue(options) {
 initMixin(Vue)
 renderMixin(Vue)
 lifecycleMixin(Vue)
-
 initGolbalAPI(Vue)
+stateMixin(Vue)
 
+
+// import { compileToFunction } from "./compiler/index";
+// import { createElm, patch } from "./vdom/patch";
 // let vm1 = new Vue({
 //   data: {
 //     name: 'hello'

@@ -598,35 +598,6 @@
     return new Observer(data);
   }
 
-  function initState(vm) {
-    var opts = vm.$options;
-
-    if (opts.props) ;
-
-    if (opts.methods) ;
-
-    if (opts.data) {
-      initData(vm);
-    }
-
-    if (opts.computed) ;
-
-    if (opts.watch) ;
-  }
-
-  function initData(vm) {
-    //数据初始化
-    var data = vm.$options.data;
-    data = vm._data = typeof data === 'function' ? data.call(vm) : data; //对象劫持
-    //MVVM 数据驱动视图
-
-    for (var key in data) {
-      proxy(vm, "_data", key);
-    }
-
-    observe(data);
-  }
-
   var callbacks = [];
   var waiting = false;
 
@@ -676,28 +647,48 @@
   var id = 0;
 
   var Watcher = /*#__PURE__*/function () {
-    function Watcher(vm, expOrFn, fn, callback, options) {
+    function Watcher(vm, expOrFn, callback, options) {
       _classCallCheck(this, Watcher);
 
       this.vm = vm;
-      this.callback = callback;
-      this.fn = fn;
+      this.callback = callback; //看看是不是用户watcher
+
+      this.user = !!options.user;
       this.options = options;
       this.depsId = new Set();
-      this.id = id++; //传入的回调函数放到getter属性上
+      this.id = id++; //传入的回调函数放到getter属性上(expOrFn有可能是字符串:用户watcher)
 
-      this.getter = expOrFn;
+      if (typeof expOrFn === 'string') {
+        //将表达式转换成函数 数据取值时进行依赖收集
+        this.getter = function () {
+          var path = expOrFn.split('.');
+          var obj = vm;
+
+          for (var i = 0; i < path.length; i++) {
+            obj = obj[path[i]];
+          } //有可能是是xx.xx这种多层嵌套的
+
+
+          return obj;
+        };
+      } else {
+        this.getter = expOrFn;
+      }
+
       this.deps = [];
-      this.get();
+      this.value = this.get(); //默认初始化要取值
     }
 
     _createClass(Watcher, [{
       key: "get",
       value: function get() {
         pushTarget(this); //把watcher存起来
+        //新的值
 
-        this.getter();
+        var value = this.getter();
         popTarget(); //移除watcher
+
+        return value;
       }
     }, {
       key: "addDep",
@@ -722,12 +713,80 @@
     }, {
       key: "run",
       value: function run() {
-        this.get();
+        var newValue = this.get();
+        var oldValue = this.value; //保证上一次的新值是下一次的旧值
+
+        this.value = newValue;
+
+        if (this.user) {
+          this.callback.call(this.vm, newValue, oldValue);
+        }
       }
     }]);
 
     return Watcher;
   }();
+
+  function stateMixin(Vue) {
+    //这里会初始化用户watcher options就是immediate deep这些配置项
+    Vue.prototype.$watch = function (key, handler) {
+      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+      options.user = true; //告诉watcher是用户watcher 和渲染watcher区分开
+
+      new Watcher(this, key, handler, options);
+    };
+  }
+  function initState(vm) {
+    var opts = vm.$options;
+
+    if (opts.props) ;
+
+    if (opts.methods) ;
+
+    if (opts.data) {
+      initData(vm);
+    }
+
+    if (opts.computed) ;
+
+    if (opts.watch) {
+      initWatch(vm);
+    }
+  }
+
+  function initData(vm) {
+    //数据初始化
+    var data = vm.$options.data;
+    data = vm._data = typeof data === 'function' ? data.call(vm) : data; //对象劫持
+    //MVVM 数据驱动视图
+
+    for (var key in data) {
+      proxy(vm, "_data", key);
+    }
+
+    observe(data);
+  }
+
+  function initWatch(vm) {
+    var watch = vm.$options.watch;
+
+    for (var key in watch) {
+      var handler = watch[key];
+
+      if (Array.isArray(handler)) {
+        //数组的情况
+        for (var i = 0; i < handler.length; i++) {
+          createWatcher(vm, key, handler[i]);
+        }
+      } else {
+        createWatcher(vm, key, handler);
+      }
+    }
+  }
+
+  function createWatcher(vm, key, handler) {
+    return vm.$watch(key, handler);
+  }
 
   /**
    * 老节点和新节点做比对diff
@@ -1305,7 +1364,8 @@
   initMixin$1(Vue);
   renderMixin(Vue);
   lifecycleMixin(Vue);
-  initGolbalAPI(Vue); // let vm1 = new Vue({
+  initGolbalAPI(Vue);
+  stateMixin(Vue); // import { compileToFunction } from "./compiler/index";
 
   return Vue;
 

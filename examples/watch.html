@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="app">{{name}}----{{userInfo.age}}----{{test}}</div>
+  <script src="../dist/umd/vue.js"></script>
+  <script>
+    const vm = new Vue({
+      el: "#app",
+      data() {
+        return {
+          name: 'hello word',
+          userInfo:{
+            age:25
+          },
+          test:'t1'
+        }
+      },
+      created() {
+        setTimeout(() => {
+          this.name = 'xxx'
+          this.userInfo.age ++
+        }, 2000)
+      },
+      mounted() {
+        setTimeout(()=>{
+          this.test = 'tttt1'
+        })
+      },
+      watch: {
+        name(newValue, oldValue) {
+          console.log(`监听到name变化,新值为${newValue},旧值为${oldValue}`)
+        },
+        'userInfo.age'(newValue,oldValue){
+          console.log(`监听到userInfo下的age变化,新值为${newValue},旧值为${oldValue}`)
+        }
+      }
+    })
+
+    vm.$watch('test',(newValue,oldValue)=>{
+      console.log(`监听到test变化,新值为${newValue},旧值为${oldValue}`)
+    })
+  </script>
+</body>
+
+</html>
