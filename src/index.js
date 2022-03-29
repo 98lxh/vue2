@@ -1,7 +1,7 @@
 import { initMixin } from "./init";
 import { renderMixin } from "./render";
 import { lifecycleMixin } from './lifecycle'
-import { initGolbalAPI } from "./initGlobalAPI/index";
+import { initGolbalAPI } from "./globalAPI/index";
 import { stateMixin } from "./state";
 
 //核心
