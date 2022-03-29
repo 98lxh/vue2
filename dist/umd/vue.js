@@ -216,7 +216,7 @@
   }
 
   function isUnaryTag(tagName) {
-    var unaryTag = ['input'];
+    var unaryTag = ['input', 'br'];
     return unaryTag.includes(tagName);
   }
 
@@ -671,7 +671,6 @@
         if (value === newValue) return;
         observe(newValue);
         value = newValue;
-        console.log('update', newValue);
         dep.notify(); //通知依赖的watcher进行更新操作
       }
     });
@@ -1397,7 +1396,7 @@
   }
 
   function isReservedTag(tagName) {
-    var reservedTag = 'div,p,input,select,button,option';
+    var reservedTag = 'div,p,input,select,button,option,br';
     var has = {};
     reservedTag.split(",").forEach(function (tag) {
       has[tag] = true;

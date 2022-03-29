@@ -43,7 +43,6 @@ function defineReactive(target, key, value) {
       if (value === newValue) return
       observe(newValue)
       value = newValue
-      console.log('update', newValue)
       dep.notify();//通知依赖的watcher进行更新操作
     }
   })

@@ -1,4 +1,4 @@
 export function isUnaryTag(tagName) {
-  const unaryTag = ['input'];
+  const unaryTag = ['input', 'br'];
   return unaryTag.includes(tagName)
 }

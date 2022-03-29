@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+<div id="app">
+  <div id="test" v-bind:title="title">查看我的title属性</div>
+  <input type="text" v-model="title" />
+</div>
+</body>
+
+<script src="./../../dist/umd/vue.js"></script>
+<script>
+  const vm = new Vue({
+    el:"#app",
+    data(){
+      return{
+        title:'test'
+      }
+    }
+  })
+</script>
+</html>

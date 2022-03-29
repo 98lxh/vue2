@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+<div id="app">
+  <input type="text" v-model="inputText" />
+  <div>上方input的值:{{inputText}}</div>
+  <input type="checkbox" v-model="checked">
+  <div>上方单选框状态:{{checked?'选中':'未选中'}}</div>
+  <select v-model="selectValue">
+    <option value="1">1</option>
+    <option value="2">2</option>
+    <option value="3">3</option>
+  </select>
+  <div>上方select的值是:{{selectValue}}</div>
+  <button v-on:click="reset">重置</button>
+</div>
+</body>
+
+<script src="./../../dist/umd/vue.js"></script>
+<script>
+  const vm = new Vue({
+    el:"#app",
+    data(){
+      return{
+        inputText:'',
+        checked:false,
+        selectValue:'2'
+      }
+    },
+    methods:{
+      reset(){
+        this.inputText = '';
+        this.checked = '';
+        this.selectValue = ''
+      }
+    }
+  })
+</script>
+</html>
