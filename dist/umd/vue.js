@@ -293,8 +293,7 @@
 
     function start(tagName, attributes, directive) {
       var parent = stack[stack.length - 1];
-      var element = createAstElement(tagName, attributes, directive);
-      console.log(element); //设置根节点
+      var element = createAstElement(tagName, attributes, directive); //设置根节点
 
       if (!root) {
         root = element;
@@ -432,7 +431,6 @@
 
       if (vOn !== -1) {
         directive.vOn = parserVOn(attrArr[vOn]);
-        console.log(directive);
         attrArr.splice(vOn, 1);
       } //处理v-bind指令
 
@@ -854,7 +852,9 @@
 
     if (opts.props) ;
 
-    if (opts.methods) ;
+    if (opts.methods) {
+      initMethods(vm);
+    }
 
     if (opts.data) {
       initData(vm);
@@ -864,6 +864,15 @@
 
     if (opts.watch) {
       initWatch(vm);
+    }
+  }
+
+  function initMethods(vm) {
+    var methods = vm.$options.methods;
+    vm._methods = methods;
+
+    for (var key in methods) {
+      proxy(vm, "_methods", key);
     }
   }
 

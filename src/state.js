@@ -7,7 +7,7 @@ export function stateMixin(Vue) {
   //这里会初始化用户watcher options就是immediate deep这些配置项
   Vue.prototype.$watch = function (key, handler, options = {}) {
     options.user = true //告诉watcher是用户watcher 和渲染watcher区分开
-    new Watcher(this, key, handler,options)
+    new Watcher(this, key, handler, options)
   }
 }
 
@@ -32,7 +32,14 @@ export function initState(vm) {
 
 
 function initProps(vm) { }
-function initMethods(vm) { }
+function initMethods(vm) {
+  const { methods } = vm.$options;
+  vm._methods = methods
+
+  for (let key in methods) {
+    proxy(vm, "_methods", key)
+  }
+}
 function initData(vm) {
   //数据初始化
   let data = vm.$options.data;

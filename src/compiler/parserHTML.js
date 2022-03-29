@@ -69,7 +69,6 @@ export function parserHTML(html) {
   function start(tagName, attributes, directive) {
     const parent = stack[stack.length - 1]
     const element = createAstElement(tagName, attributes, directive)
-    console.log(element)
     //设置根节点
     if (!root) {
       root = element
@@ -174,7 +173,6 @@ export function parserHTML(html) {
     let vOn = attrArr.findIndex(attr => attr.indexOf('v-on') !== -1)
     if (vOn !== -1) {
       directive.vOn = parserVOn(attrArr[vOn])
-      console.log(directive)
       attrArr.splice(vOn, 1)
     }
 
