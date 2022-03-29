@@ -1,26 +1,75 @@
 
 import { isUnaryTag } from "../utils/isUnaryTag";
 
+
+//<input v-model:xx="xxx" type="xx" />
+function parserVModel(modelExp, typeExp, tag) {
+  const type = typeExp?.split("=")[1].replace(/"/g, "") || 'text'
+  const [_, modelValue] = modelExp.split("=")
+  let vModel = {}
+  if (tag === 'input') {
+    //input输入框 或者checkbox
+    if (type === 'text') {
+      //文本输入框
+      vModel = { tag, type: 'text', value: modelValue }
+    } else if (type === 'checkbox') {
+      //checkbox
+      vModel = { tag, type: 'checkbox', value: modelValue }
+    }
+  } else if (tag === 'textarea') {
+    vModel = { tag, value: modelValue }
+
+  } else if (tag === 'select') {
+    vModel = { tag, value: modelValue }
+  }
+
+  return vModel
+}
+
+
+//v-bind:xx="xxx"
+function parserVBind(bindingExp) {
+  bindingExp = bindingExp.split(":")[1];
+  const [bindingKey, bindingValue] = bindingExp.split("=");
+
+  return {
+    [bindingKey]: bindingValue.replace(/"/g, "")
+  }
+
+}
+
+//v-on:click="xx"
+function parserVOn(onExp) {
+  onExp = onExp.split(":")[1];
+  const [event, callback] = onExp.split("=");
+
+  return {
+    [event]: callback.replace(/"/g, "")
+  }
+}
+
 export function parserHTML(html) {
 
   let root = null;
   const stack = [];
 
   //将解析后的结果组合成ast树 -> stack
-  function createAstElement(tagName, attrs) {
+  function createAstElement(tagName, attrs, directive) {
     return {
       tag: tagName,
       type: 1,
       children: [],
       parent: null,
-      attrs
+      attrs,
+      directive
     }
   }
 
 
-  function start(tagName, attributes) {
+  function start(tagName, attributes, directive) {
     const parent = stack[stack.length - 1]
-    const element = createAstElement(tagName, attributes)
+    const element = createAstElement(tagName, attributes, directive)
+    console.log(element)
     //设置根节点
     if (!root) {
       root = element
@@ -36,7 +85,6 @@ export function parserHTML(html) {
 
   function end(tagName) {
     let last = stack.pop();
-    console.log(last.tag, tagName)
     if (last.tag !== tagName) {
       //闭合标签有误
       throw new Error('标签有误')
@@ -113,15 +161,36 @@ export function parserHTML(html) {
     }
 
     const attrArr = attrStr ? attrStr.trim().split(' ') : [];
+    const directive = {}
+    //处理v-model指令
     let vModel = attrArr.findIndex(attr => attr.indexOf('v-model') !== -1)
     if (vModel !== -1) {
-      console.log(attrArr)
+      //找下这个节点的type
+      const type = attrArr.findIndex(attr => attr.indexOf('type') !== -1)
+      directive.vModel = parserVModel(attrArr[vModel], attrArr[type], tagName)
       attrArr.splice(vModel, 1)
     }
+    //处理v-on指令
+    let vOn = attrArr.findIndex(attr => attr.indexOf('v-on') !== -1)
+    if (vOn !== -1) {
+      directive.vOn = parserVOn(attrArr[vOn])
+      console.log(directive)
+      attrArr.splice(vOn, 1)
+    }
+
+    //处理v-bind指令
+    let vBind = attrArr.findIndex(attr => attr.indexOf('v-bind') !== -1)
+    if (vBind !== -1) {
+      directive.vBind = parserVBind(attrArr[vBind])
+      attrArr.splice(vBind, 1)
+    }
+
+
     //解析成一个属性字符串
     const attrs = parserAttrs([...attrArr, styleStr])
     return {
       tagName,
+      directive,
       attrs
     }
   }
@@ -145,7 +214,7 @@ export function parserHTML(html) {
       //解析开始标签
       const startTagMatch = parserStartTag(html);
       if (startTagMatch) {
-        start(startTagMatch.tagName, startTagMatch.attrs)
+        start(startTagMatch.tagName, startTagMatch.attrs, startTagMatch.directive)
 
         if (isUnaryTag(startTagMatch.tagName)) {
           //自闭合标签 直接出栈

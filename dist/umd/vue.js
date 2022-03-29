@@ -210,23 +210,91 @@
     return unaryTag.includes(tagName);
   }
 
+  function parserVModel(modelExp, typeExp, tag) {
+    var type = (typeExp === null || typeExp === void 0 ? void 0 : typeExp.split("=")[1].replace(/"/g, "")) || 'text';
+
+    var _modelExp$split = modelExp.split("="),
+        _modelExp$split2 = _slicedToArray(_modelExp$split, 2);
+        _modelExp$split2[0];
+        var modelValue = _modelExp$split2[1];
+
+    var vModel = {};
+
+    if (tag === 'input') {
+      //input输入框 或者checkbox
+      if (type === 'text') {
+        //文本输入框
+        vModel = {
+          tag: tag,
+          type: 'text',
+          value: modelValue
+        };
+      } else if (type === 'checkbox') {
+        //checkbox
+        vModel = {
+          tag: tag,
+          type: 'checkbox',
+          value: modelValue
+        };
+      }
+    } else if (tag === 'textarea') {
+      vModel = {
+        tag: tag,
+        value: modelValue
+      };
+    } else if (tag === 'select') {
+      vModel = {
+        tag: tag,
+        value: modelValue
+      };
+    }
+
+    return vModel;
+  } //v-bind:xx="xxx"
+
+
+  function parserVBind(bindingExp) {
+    bindingExp = bindingExp.split(":")[1];
+
+    var _bindingExp$split = bindingExp.split("="),
+        _bindingExp$split2 = _slicedToArray(_bindingExp$split, 2),
+        bindingKey = _bindingExp$split2[0],
+        bindingValue = _bindingExp$split2[1];
+
+    return _defineProperty({}, bindingKey, bindingValue.replace(/"/g, ""));
+  } //v-on:click="xx"
+
+
+  function parserVOn(onExp) {
+    onExp = onExp.split(":")[1];
+
+    var _onExp$split = onExp.split("="),
+        _onExp$split2 = _slicedToArray(_onExp$split, 2),
+        event = _onExp$split2[0],
+        callback = _onExp$split2[1];
+
+    return _defineProperty({}, event, callback.replace(/"/g, ""));
+  }
+
   function parserHTML(html) {
     var root = null;
     var stack = []; //将解析后的结果组合成ast树 -> stack
 
-    function createAstElement(tagName, attrs) {
+    function createAstElement(tagName, attrs, directive) {
       return {
         tag: tagName,
         type: 1,
         children: [],
         parent: null,
-        attrs: attrs
+        attrs: attrs,
+        directive: directive
       };
     }
 
-    function start(tagName, attributes) {
+    function start(tagName, attributes, directive) {
       var parent = stack[stack.length - 1];
-      var element = createAstElement(tagName, attributes); //设置根节点
+      var element = createAstElement(tagName, attributes, directive);
+      console.log(element); //设置根节点
 
       if (!root) {
         root = element;
@@ -244,7 +312,6 @@
 
     function end(tagName) {
       var last = stack.pop();
-      console.log(last.tag, tagName);
 
       if (last.tag !== tagName) {
         //闭合标签有误
@@ -343,19 +410,47 @@
       }
 
       var attrArr = attrStr ? attrStr.trim().split(' ') : [];
+      var directive = {}; //处理v-model指令
+
       var vModel = attrArr.findIndex(function (attr) {
         return attr.indexOf('v-model') !== -1;
       });
 
       if (vModel !== -1) {
-        console.log(attrArr);
+        //找下这个节点的type
+        var type = attrArr.findIndex(function (attr) {
+          return attr.indexOf('type') !== -1;
+        });
+        directive.vModel = parserVModel(attrArr[vModel], attrArr[type], tagName);
         attrArr.splice(vModel, 1);
+      } //处理v-on指令
+
+
+      var vOn = attrArr.findIndex(function (attr) {
+        return attr.indexOf('v-on') !== -1;
+      });
+
+      if (vOn !== -1) {
+        directive.vOn = parserVOn(attrArr[vOn]);
+        console.log(directive);
+        attrArr.splice(vOn, 1);
+      } //处理v-bind指令
+
+
+      var vBind = attrArr.findIndex(function (attr) {
+        return attr.indexOf('v-bind') !== -1;
+      });
+
+      if (vBind !== -1) {
+        directive.vBind = parserVBind(attrArr[vBind]);
+        attrArr.splice(vBind, 1);
       } //解析成一个属性字符串
 
 
       var attrs = parserAttrs([].concat(_toConsumableArray(attrArr), [styleStr]));
       return {
         tagName: tagName,
+        directive: directive,
         attrs: attrs
       };
     }
@@ -380,7 +475,7 @@
         var startTagMatch = parserStartTag(html);
 
         if (startTagMatch) {
-          start(startTagMatch.tagName, startTagMatch.attrs);
+          start(startTagMatch.tagName, startTagMatch.attrs, startTagMatch.directive);
 
           if (isUnaryTag(startTagMatch.tagName)) {
             //自闭合标签 直接出栈
@@ -415,8 +510,7 @@
   }
 
   function compileToFunction(template) {
-    console.log(template); //解析字符串 将html转换成ast语法树
-
+    //解析字符串 将html转换成ast语法树
     var root = parserHTML(template); //将ats语法树转换成js语法
     //<div id="app"></div> -> _c("div",{id:app},"")
 
@@ -1218,7 +1312,7 @@
   }
 
   function isReservedTag(tagName) {
-    var reservedTag = 'div,p,input,select';
+    var reservedTag = 'div,p,input,select,button';
     var has = {};
     reservedTag.split(",").forEach(function (tag) {
       has[tag] = true;

@@ -8,7 +8,9 @@
 </head>
 <body>
   <div id="app">
-    <input v-model="test"></input>
+    <input v-model="test" />
+    <div v-bind:a="test"></div>
+    <button v-on:click="xxx">xxx</button>
   </div>
   <script src="./../dist/umd/vue.js"></script>
   <script>
