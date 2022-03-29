@@ -5,7 +5,8 @@ import { isUnaryTag } from "../utils/isUnaryTag";
 //<input v-model:xx="xxx" type="xx" />
 function parserVModel(modelExp, typeExp, tag) {
   const type = typeExp?.split("=")[1].replace(/"/g, "") || 'text'
-  const [_, modelValue] = modelExp.split("=")
+  let [_, modelValue] = modelExp.split("=")
+  modelValue = modelValue.replace(/"/g, "")
   let vModel = {}
   if (tag === 'input') {
     //input输入框 或者checkbox

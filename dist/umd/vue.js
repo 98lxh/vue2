@@ -50,7 +50,17 @@
 
   function generate(el) {
     var children = genChildren(el);
-    var code = "_c(\"".concat(el.tag, "\",").concat(el.attrs).concat(children ? ",".concat(children) : '', ")");
+    var directiveStr = JSON.stringify(el.directive);
+    var directive = directiveStr.slice(1, directiveStr.length - 1);
+    var attrs = el.attrs.slice(0, el.attrs.length - 1);
+
+    if (attrs.length === 1) {
+      attrs = attrs + directive + "}";
+    } else {
+      attrs = attrs + ',' + directive + "}";
+    }
+
+    var code = "_c(\"".concat(el.tag, "\",").concat(attrs).concat(children ? ",".concat(children) : '', ")");
     return code;
   }
 
@@ -218,6 +228,7 @@
         _modelExp$split2[0];
         var modelValue = _modelExp$split2[1];
 
+    modelValue = modelValue.replace(/"/g, "");
     var vModel = {};
 
     if (tag === 'input') {
@@ -660,6 +671,7 @@
         if (value === newValue) return;
         observe(newValue);
         value = newValue;
+        console.log('update', newValue);
         dep.notify(); //通知依赖的watcher进行更新操作
       }
     });
@@ -1108,6 +1120,12 @@
         }
       } else if (_key2 === 'class') {
         el["class"] = newProps["class"];
+      } else if (_key2 === 'vModel') {
+        setVModel(el.tagName.toLowerCase(), newProps['vModel'].value, vnode);
+      } else if (_key2 === 'vOn') {
+        setVOn(vnode);
+      } else if (_key2 === 'vBind') {
+        setVBind(vnode);
       } else {
         el.setAttribute(_key2, newProps[_key2]);
       }
@@ -1154,6 +1172,64 @@
     }
 
     return vnode.el;
+  } //设置双向绑定属性v-model
+
+  function setVModel(tag, value, vnode) {
+    var context = vnode.context,
+        el = vnode.el;
+
+    if (tag === 'select') {
+      //初始化异步处理一下  需要等待option选项
+      context.$nextTick(function () {
+        el.value = context[value];
+      });
+      el.addEventListener('change', function () {
+        context[value] = el.value;
+      });
+    } else if (tag === 'input' && el.type === 'text') {
+      //文本输入框
+      el.value = context[value];
+      el.addEventListener('input', function () {
+        context[value] = el.value;
+      });
+    } else if (tag === 'input' && el.type === 'checkbox') {
+      el.checked = context[value];
+      el.addEventListener('change', function () {
+        context[value] = el.checked;
+      });
+    }
+  } //设置v-bind指令
+
+
+  function setVBind(vnode) {
+    var data = vnode.data,
+        context = vnode.context,
+        el = vnode.el;
+
+    for (var key in data.vBind) {
+      el.setAttribute(key, context[data.vBind[key]]);
+    }
+  } //设置v-on
+
+
+  function setVOn(vnode) {
+    var data = vnode.data,
+        el = vnode.el,
+        context = vnode.context;
+
+    var _loop = function _loop(eventName) {
+      el.addEventListener(eventName, function () {
+        for (var _len = arguments.length, args = new Array(_len), _key3 = 0; _key3 < _len; _key3++) {
+          args[_key3] = arguments[_key3];
+        }
+
+        context[data.vOn[eventName]].apply(context, args);
+      });
+    };
+
+    for (var eventName in data.vOn) {
+      _loop(eventName);
+    }
   }
 
   function lifecycleMixin(Vue) {
@@ -1321,7 +1397,7 @@
   }
 
   function isReservedTag(tagName) {
-    var reservedTag = 'div,p,input,select,button';
+    var reservedTag = 'div,p,input,select,button,option';
     var has = {};
     reservedTag.split(",").forEach(function (tag) {
       has[tag] = true;
@@ -1343,7 +1419,7 @@
 
     if (isReservedTag(tag)) {
       //html的原生标签
-      return vnode(tag, data, key, children, undefined);
+      return vnode(tag, data, key, children, undefined, undefined, vm);
     } else {
       //找到组件的定义 -> 子组件的构造函数
       var Ctor = vm.$options.components[tag];
@@ -1378,14 +1454,15 @@
   // 将template转换成ast -> 生成render方法 -> 生成虚拟dom -> 生成真实dom
   //页面更新重新生成虚拟dom -> 更新dom
 
-  function vnode(tag, data, key, children, text, componentOptions) {
+  function vnode(tag, data, key, children, text, componentOptions, context) {
     return {
       tag: tag,
       data: data,
       key: key,
       children: children,
       text: text,
-      componentOptions: componentOptions
+      componentOptions: componentOptions,
+      context: context
     };
   }
 

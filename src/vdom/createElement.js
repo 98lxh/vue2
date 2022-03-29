@@ -8,7 +8,7 @@ export function createElement(vm, tag, data = {}, ...children) {
   }
 
   if (isReservedTag(tag)) { //html的原生标签
-    return vnode(tag, data, key, children, undefined)
+    return vnode(tag, data, key, children, undefined, undefined, vm)
   } else {
     //找到组件的定义 -> 子组件的构造函数
     const Ctor = vm.$options.components[tag]
@@ -50,13 +50,14 @@ export function createTextNode(vm, text) {
 
 //页面更新重新生成虚拟dom -> 更新dom
 
-function vnode(tag, data, key, children, text, componentOptions) {
+function vnode(tag, data, key, children, text, componentOptions, context) {
   return {
     tag,
     data,
     key,
     children,
     text,
-    componentOptions
+    componentOptions,
+    context
   }
 }

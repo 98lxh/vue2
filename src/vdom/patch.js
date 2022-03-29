@@ -162,10 +162,10 @@ function updateChildren(parent, oldChildren, newChildren) {
   }
 }
 
+
 //更新属性
 function updatePropertys(vnode, oldProps) {
   const newProps = vnode.data || {};
-
   //对比style
   let newStyle = newProps.style || {};
   let oldStyle = oldProps && oldProps.style || {};
@@ -191,6 +191,12 @@ function updatePropertys(vnode, oldProps) {
       }
     } else if (key === 'class') {
       el.class = newProps.class
+    } else if (key === 'vModel') {
+      setVModel(el.tagName.toLowerCase(), newProps['vModel'].value, vnode)
+    } else if (key === 'vOn') {
+      setVOn(vnode)
+    } else if (key === 'vBind') {
+      setVBind(vnode)
     } else {
       el.setAttribute(key, newProps[key])
     }
@@ -237,4 +243,48 @@ export function createElm(vnode) {
   }
 
   return vnode.el
+}
+
+//设置双向绑定属性v-model
+function setVModel(tag, value, vnode) {
+  const { context, el } = vnode;
+  if (tag === 'select') {
+    //初始化异步处理一下  需要等待option选项
+    context.$nextTick(() => {
+      el.value = context[value]
+    })
+
+    el.addEventListener('change', function () {
+      context[value] = el.value
+    })
+  } else if (tag === 'input' && el.type === 'text') {
+    //文本输入框
+    el.value = context[value]
+    el.addEventListener('input', function () {
+      context[value] = el.value
+    })
+  } else if (tag === 'input' && el.type === 'checkbox') {
+    el.checked = context[value]
+    el.addEventListener('change', function () {
+      context[value] = el.checked
+    })
+  }
+}
+
+//设置v-bind指令
+function setVBind(vnode) {
+  const { data, context, el } = vnode
+  for (let key in data.vBind) {
+    el.setAttribute(key, context[data.vBind[key]])
+  }
+}
+
+//设置v-on
+function setVOn(vnode) {
+  const { data, el, context } = vnode;
+  for (let eventName in data.vOn) {
+    el.addEventListener(eventName, function (...args) {
+      context[data.vOn[eventName]].apply(context, args)
+    })
+  }
 }

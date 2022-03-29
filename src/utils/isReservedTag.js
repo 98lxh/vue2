@@ -1,5 +1,5 @@
 export function isReservedTag(tagName) {
-  const reservedTag = 'div,p,input,select,button';
+  const reservedTag = 'div,p,input,select,button,option';
   const has = {};
 
   reservedTag.split(",").forEach(tag => {

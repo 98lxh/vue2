@@ -1,16 +1,16 @@
 
 import { def, isObject } from "../utils/index";
 import { arrayMetods } from "./array"
-import {Dep} from './dep'
+import { Dep } from './dep'
 
 
 //将数组中每一部分都取出来数据变化也去更新视图
-function dependArray(value){
-  for(let i = 0;i<value.length;i++){
+function dependArray(value) {
+  for (let i = 0; i < value.length; i++) {
     const current = value[i];
     current.__ob__ && current.__ob__.dep.depend()
 
-    if(Array.isArray(current)){
+    if (Array.isArray(current)) {
       dependArray(current)
     }
   }
@@ -24,15 +24,15 @@ function defineReactive(target, key, value) {
   return Object.defineProperty(target, key, {
     get() {
       //每个属性都对应着自己的watcher
-      if(Dep.target){
+      if (Dep.target) {
         //如果当前有watcher
         dep.depend()
-        if(childOb){
+        if (childOb) {
           //收集了数组的相关依赖
           childOb.dep.depend()
 
           //如果数组中还有数组也去收集依赖
-          if(Array.isArray(value)){
+          if (Array.isArray(value)) {
             dependArray(value)
           }
         }
@@ -43,7 +43,7 @@ function defineReactive(target, key, value) {
       if (value === newValue) return
       observe(newValue)
       value = newValue
-
+      console.log('update', newValue)
       dep.notify();//通知依赖的watcher进行更新操作
     }
   })
@@ -84,5 +84,5 @@ export function observe(data) {
   }
 
   //观测数据
- return new Observer(data)
+  return new Observer(data)
 }

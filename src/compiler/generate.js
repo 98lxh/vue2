@@ -1,5 +1,4 @@
 function gen(node) {
-
   if (node.type === 1) {
     //元素节点
     return generate(node)
@@ -44,6 +43,14 @@ function genChildren(el) {
 
 export function generate(el) {
   const children = genChildren(el);
-  let code = `_c("${el.tag}",${el.attrs}${children ? `,${children}` : ''})`
+  const directiveStr = JSON.stringify(el.directive)
+  const directive = directiveStr.slice(1, directiveStr.length - 1)
+  let attrs = el.attrs.slice(0, el.attrs.length - 1)
+  if (attrs.length === 1) {
+    attrs = attrs + directive + "}"
+  } else {
+    attrs = attrs + ',' + directive + "}"
+  }
+  let code = `_c("${el.tag}",${attrs}${children ? `,${children}` : ''})`
   return code
 }
