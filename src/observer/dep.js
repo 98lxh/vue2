@@ -29,6 +29,7 @@ export class Dep {
 Dep.target
 
 let stack = [];
+
 //将watcher保留 和移除
 export function pushTarget(watcher){
   Dep.target = watcher

@@ -11,10 +11,17 @@ class Watcher {
     this.callback = callback;
     //看看是不是用户watcher
     this.user = !!options.user
-
-    this.options = options;
+    //看看是不是懒执行 计算属性watcher
+    this.lazy = !!options.lazy
+    //标记计算属性watcher的值是不是脏值
+    this.dirty = !!options.lazy
+    this.options = options
+    //watcher 对应的dep id的集合
     this.depsId = new Set()
+    //watcher的id 用来去重
     this.id = id++
+    //watcher对应的dep依赖
+    this.deps = []
 
     //传入的回调函数放到getter属性上(expOrFn有可能是字符串:用户watcher)
     if (typeof expOrFn === 'string') {
@@ -29,14 +36,13 @@ class Watcher {
       this.getter = expOrFn;
     }
 
-    this.deps = []
-
-    this.value = this.get() //默认初始化要取值
+    //懒执行初始化的时候就不执行
+    this.value = this.lazy ? undefined : this.get() //默认初始化要取值
   }
   get() {
     pushTarget(this)//把watcher存起来
     //新的值
-    const value = this.getter()
+    const value = this.getter.call(this.vm)
     popTarget() //移除watcher
     return value
   }
@@ -54,7 +60,11 @@ class Watcher {
   update() {
     //等待一起更新 因为每次调用update的时候都放入了watcher
     // this.get()
-    queueWatcher(this)
+    if (this.lazy) {
+      this.dirty = true
+    } else {
+      queueWatcher(this)
+    }
   }
 
   run() {
@@ -64,6 +74,22 @@ class Watcher {
     this.value = newValue
     if (this.user) {
       this.callback.call(this.vm, newValue, oldValue)
+    }
+  }
+
+  //计算的getter执行
+  evaluate() {
+    //设置dirty标记为非脏值 计算属性的缓存就是这样实现的
+    this.dirty = false
+    this.value = this.get()
+  }
+
+
+  //这里主要是computed对应的依赖只收集了计算属性watcher 但是这些依赖也应该收集渲染watcher
+  depend(){
+    let i = this.deps.length;
+    while(i--){
+      this.deps[i].depend()
     }
   }
 }

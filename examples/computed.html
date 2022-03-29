@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <div id="app">
+    {{fullName}}<br />
+    {{fullName}}<br />
+    {{fullName}}<br />
+    <button v-on:click="changeLastName">点击改变lastName 计算属性重新计算</button>
+  </div>
+  <script src="./../dist/umd/vue.js"></script>
+  <script>
+    /**
+     * 计算属性默认不执行 -> Object.defineProperty
+     * 多次取值依赖的值不变不会重复执行
+     * 依赖的值变了需要重复执行
+     * 
+     * 内部有一个dirty属性是不是脏值 默认是true 取值后变为false 依赖的值变化了dirty变为true
+     * 
+     * 计算属性中的值 应该记录计算属性watcher和渲染watcher
+    */
+    const vm = new Vue({
+      el:"#app",
+      data(){
+        return {
+          firstName:'hello',
+          lastName:'word',
+          count:1
+        }
+      },
+      methods: {
+        changeLastName(){
+          const newName = this.lastName === 'word' ? 'computed' : 'word'
+          this.lastName = newName
+        }
+      },
+      created(){
+        console.log('页面中使用了三次计算属性 但只有一次重新计算')
+      },
+      computed:{
+        fullName(){
+          console.log('重新计算')
+          return this.firstName + '  ' + this.lastName
+        }
+      }
+    })
+  </script>
+</body>
+</html>

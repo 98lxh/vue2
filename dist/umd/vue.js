@@ -529,6 +529,52 @@
     return renderFn;
   }
 
+  var id$1 = 0;
+  var Dep = /*#__PURE__*/function () {
+    function Dep() {
+      _classCallCheck(this, Dep);
+
+      this.id = id$1++;
+      this.subs = [];
+    } //依赖收集
+
+
+    _createClass(Dep, [{
+      key: "depend",
+      value: function depend() {
+        //观察者模式
+        //让watcher记住当前dep
+        Dep.target.addDep(this);
+        this.subs.push(Dep.target);
+      }
+    }, {
+      key: "addSub",
+      value: function addSub(watcher) {
+        this.subs.push(watcher);
+      } //依赖更新
+
+    }, {
+      key: "notify",
+      value: function notify() {
+        this.subs.forEach(function (watcher) {
+          watcher.update();
+        });
+      }
+    }]);
+
+    return Dep;
+  }(); //静态属性
+  var stack = []; //将watcher保留 和移除
+
+  function pushTarget(watcher) {
+    Dep.target = watcher;
+    stack.push(watcher);
+  }
+  function popTarget() {
+    stack.pop();
+    Dep.target = stack[stack.length - 1];
+  }
+
   //判断是否为一个对象
   function isObject(value) {
     return _typeof(value) === 'object' && value !== null;
@@ -586,52 +632,6 @@
       return result;
     };
   });
-
-  var id$1 = 0;
-  var Dep = /*#__PURE__*/function () {
-    function Dep() {
-      _classCallCheck(this, Dep);
-
-      this.id = id$1++;
-      this.subs = [];
-    } //依赖收集
-
-
-    _createClass(Dep, [{
-      key: "depend",
-      value: function depend() {
-        //观察者模式
-        //让watcher记住当前dep
-        Dep.target.addDep(this);
-        this.subs.push(Dep.target);
-      }
-    }, {
-      key: "addSub",
-      value: function addSub(watcher) {
-        this.subs.push(watcher);
-      } //依赖更新
-
-    }, {
-      key: "notify",
-      value: function notify() {
-        this.subs.forEach(function (watcher) {
-          watcher.update();
-        });
-      }
-    }]);
-
-    return Dep;
-  }(); //静态属性
-  var stack = []; //将watcher保留 和移除
-
-  function pushTarget(watcher) {
-    Dep.target = watcher;
-    stack.push(watcher);
-  }
-  function popTarget() {
-    stack.pop();
-    Dep.target = stack[stack.length - 1];
-  }
 
   function dependArray(value) {
     for (var i = 0; i < value.length; i++) {
@@ -778,10 +778,18 @@
       this.vm = vm;
       this.callback = callback; //看看是不是用户watcher
 
-      this.user = !!options.user;
-      this.options = options;
-      this.depsId = new Set();
-      this.id = id++; //传入的回调函数放到getter属性上(expOrFn有可能是字符串:用户watcher)
+      this.user = !!options.user; //看看是不是懒执行 计算属性watcher
+
+      this.lazy = !!options.lazy; //标记计算属性watcher的值是不是脏值
+
+      this.dirty = !!options.lazy;
+      this.options = options; //watcher 对应的dep id的集合
+
+      this.depsId = new Set(); //watcher的id 用来去重
+
+      this.id = id++; //watcher对应的dep依赖
+
+      this.deps = []; //传入的回调函数放到getter属性上(expOrFn有可能是字符串:用户watcher)
 
       if (typeof expOrFn === 'string') {
         //将表达式转换成函数 数据取值时进行依赖收集
@@ -795,10 +803,10 @@
         };
       } else {
         this.getter = expOrFn;
-      }
+      } //懒执行初始化的时候就不执行
 
-      this.deps = [];
-      this.value = this.get(); //默认初始化要取值
+
+      this.value = this.lazy ? undefined : this.get(); //默认初始化要取值
     }
 
     _createClass(Watcher, [{
@@ -807,7 +815,7 @@
         pushTarget(this); //把watcher存起来
         //新的值
 
-        var value = this.getter();
+        var value = this.getter.call(this.vm);
         popTarget(); //移除watcher
 
         return value;
@@ -830,7 +838,11 @@
       value: function update() {
         //等待一起更新 因为每次调用update的时候都放入了watcher
         // this.get()
-        queueWatcher(this);
+        if (this.lazy) {
+          this.dirty = true;
+        } else {
+          queueWatcher(this);
+        }
       }
     }, {
       key: "run",
@@ -842,6 +854,24 @@
 
         if (this.user) {
           this.callback.call(this.vm, newValue, oldValue);
+        }
+      } //计算的getter执行
+
+    }, {
+      key: "evaluate",
+      value: function evaluate() {
+        //设置dirty标记为非脏值 计算属性的缓存就是这样实现的
+        this.dirty = false;
+        this.value = this.get();
+      } //这里主要是computed对应的依赖只收集了计算属性watcher 但是这些依赖也应该收集渲染watcher
+
+    }, {
+      key: "depend",
+      value: function depend() {
+        var i = this.deps.length;
+
+        while (i--) {
+          this.deps[i].depend();
         }
       }
     }]);
@@ -861,7 +891,9 @@
   function initState(vm) {
     var opts = vm.$options;
 
-    if (opts.props) ;
+    if (opts.props) {
+      initProps(vm);
+    }
 
     if (opts.methods) {
       initMethods(vm);
@@ -871,12 +903,18 @@
       initData(vm);
     }
 
-    if (opts.computed) ;
+    if (opts.computed) {
+      initComputed(vm);
+    }
 
     if (opts.watch) {
       initWatch(vm);
     }
   }
+  /**
+   * todo 
+  */
+  // function initProps(vm) { }
 
   function initMethods(vm) {
     var methods = vm.$options.methods;
@@ -885,7 +923,8 @@
     for (var key in methods) {
       proxy(vm, "_methods", key);
     }
-  }
+  } //初始化data
+
 
   function initData(vm) {
     //数据初始化
@@ -898,7 +937,28 @@
     }
 
     observe(data);
-  }
+  } //初始化计算属性
+
+
+  function initComputed(vm) {
+    var watchers = vm._computedWatchers = {};
+    var computed = vm.$options.computed;
+
+    for (var key in computed) {
+      var userDef = computed[key];
+      var getter = typeof userDef === 'function' ? userDef : userDef.get; //每个计算属性 本质就是watcher
+      //lazy:true 表示懒执行
+      //将watcher和属性做映射
+
+      watchers[key] = new Watcher(vm, getter, function () {}, {
+        lazy: true
+      });
+      vm._computedWatcher = watchers; //将key定义在vm上
+
+      defineComputed(vm, key, userDef);
+    }
+  } //初始化watch
+
 
   function initWatch(vm) {
     var watch = vm.$options.watch;
@@ -915,10 +975,44 @@
         createWatcher(vm, key, handler);
       }
     }
-  }
+  } //创建用户watcher
+
 
   function createWatcher(vm, key, handler) {
     return vm.$watch(key, handler);
+  }
+
+  function createComputedGetter(key) {
+    //取计算属性的watcher走这个get
+    return function computedGetter() {
+      //拿出这个key对应的watcher 这个watcher中包含get
+      var watcher = this._computedWatchers[key]; //根据dirty属性判断这个计算属性需不需要重新执行
+
+      if (watcher.dirty) {
+        watcher.evaluate();
+      } //如果当前取完值后Dep.target还有值 需要向上收集 这个watcher就是渲染watcher
+
+
+      if (Dep.target) {
+        //watcher对应的dep -> firstName lastName 收集他们的渲染watcher(对应computed.html的示例)
+        watcher.depend(); // watcher对应多个dep
+      }
+
+      return watcher.value;
+    };
+  }
+
+  function defineComputed(vm, key, userDef) {
+    var sharedProperty = {};
+
+    if (typeof userDef === 'function') {
+      sharedProperty.get = createComputedGetter(key);
+    } else {
+      sharedProperty.get = createComputedGetter(key);
+      sharedProperty.set = userDef.set;
+    }
+
+    Object.defineProperty(vm, key, sharedProperty);
   }
 
   /**
