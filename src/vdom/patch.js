@@ -283,8 +283,9 @@ function setVBind(vnode) {
 function setVOn(vnode) {
   const { data, el, context } = vnode;
   for (let eventName in data.vOn) {
-    el.addEventListener(eventName, function (...args) {
+    el['on' + eventName] = function (...args) {
       context[data.vOn[eventName]].apply(context, args)
-    })
+    }
+
   }
 }

@@ -1217,13 +1217,13 @@
         context = vnode.context;
 
     var _loop = function _loop(eventName) {
-      el.addEventListener(eventName, function () {
+      el['on' + eventName] = function () {
         for (var _len = arguments.length, args = new Array(_len), _key3 = 0; _key3 < _len; _key3++) {
           args[_key3] = arguments[_key3];
         }
 
         context[data.vOn[eventName]].apply(context, args);
-      });
+      };
     };
 
     for (var eventName in data.vOn) {
