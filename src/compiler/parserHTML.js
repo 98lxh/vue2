@@ -1,3 +1,6 @@
+
+import { isUnaryTag } from "../utils/isUnaryTag";
+
 export function parserHTML(html) {
 
   let root = null;
@@ -33,6 +36,7 @@ export function parserHTML(html) {
 
   function end(tagName) {
     let last = stack.pop();
+    console.log(last.tag, tagName)
     if (last.tag !== tagName) {
       //闭合标签有误
       throw new Error('标签有误')
@@ -102,13 +106,18 @@ export function parserHTML(html) {
       //style开始到结尾的字符串
       styleStr = attrStr.slice(styleStartIdx, attrStr.length - 1)
       const styleEndIndex = styleStr.indexOf(" ")
-      if(styleEndIndex !== -1){
-        styleStr = styleStr.slice(0,styleEndIndex)
+      if (styleEndIndex !== -1) {
+        styleStr = styleStr.slice(0, styleEndIndex)
         attrStr = attrStr.split(styleStr).join("")
       }
     }
 
     const attrArr = attrStr ? attrStr.trim().split(' ') : [];
+    let vModel = attrArr.findIndex(attr => attr.indexOf('v-model') !== -1)
+    if (vModel !== -1) {
+      console.log(attrArr)
+      attrArr.splice(vModel, 1)
+    }
     //解析成一个属性字符串
     const attrs = parserAttrs([...attrArr, styleStr])
     return {
@@ -137,8 +146,14 @@ export function parserHTML(html) {
       const startTagMatch = parserStartTag(html);
       if (startTagMatch) {
         start(startTagMatch.tagName, startTagMatch.attrs)
+
+        if (isUnaryTag(startTagMatch.tagName)) {
+          //自闭合标签 直接出栈
+          end(startTagMatch.tagName)
+        }
         continue;
       }
+
       const endTagMatch = parserEndTag(html);
       if (endTagMatch) {
         end(endTagMatch.tagName);

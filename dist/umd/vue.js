@@ -205,6 +205,11 @@
     throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
   }
 
+  function isUnaryTag(tagName) {
+    var unaryTag = ['input'];
+    return unaryTag.includes(tagName);
+  }
+
   function parserHTML(html) {
     var root = null;
     var stack = []; //将解析后的结果组合成ast树 -> stack
@@ -239,6 +244,7 @@
 
     function end(tagName) {
       var last = stack.pop();
+      console.log(last.tag, tagName);
 
       if (last.tag !== tagName) {
         //闭合标签有误
@@ -336,7 +342,16 @@
         }
       }
 
-      var attrArr = attrStr ? attrStr.trim().split(' ') : []; //解析成一个属性字符串
+      var attrArr = attrStr ? attrStr.trim().split(' ') : [];
+      var vModel = attrArr.findIndex(function (attr) {
+        return attr.indexOf('v-model') !== -1;
+      });
+
+      if (vModel !== -1) {
+        console.log(attrArr);
+        attrArr.splice(vModel, 1);
+      } //解析成一个属性字符串
+
 
       var attrs = parserAttrs([].concat(_toConsumableArray(attrArr), [styleStr]));
       return {
@@ -366,6 +381,12 @@
 
         if (startTagMatch) {
           start(startTagMatch.tagName, startTagMatch.attrs);
+
+          if (isUnaryTag(startTagMatch.tagName)) {
+            //自闭合标签 直接出栈
+            end(startTagMatch.tagName);
+          }
+
           continue;
         }
 
@@ -394,7 +415,8 @@
   }
 
   function compileToFunction(template) {
-    //解析字符串 将html转换成ast语法树
+    console.log(template); //解析字符串 将html转换成ast语法树
+
     var root = parserHTML(template); //将ats语法树转换成js语法
     //<div id="app"></div> -> _c("div",{id:app},"")
 
@@ -1173,7 +1195,6 @@
     Vue.prototype.$mount = function (el) {
       var vm = this;
       var options = vm.$options;
-      console.log(options);
       el = document.querySelector(el); //模板转换成渲染函数
 
       if (!options.render) {
@@ -1197,7 +1218,7 @@
   }
 
   function isReservedTag(tagName) {
-    var reservedTag = 'div,p,input,select,span';
+    var reservedTag = 'div,p,input,select';
     var has = {};
     reservedTag.split(",").forEach(function (tag) {
       has[tag] = true;

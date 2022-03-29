@@ -31,7 +31,6 @@ export function initMixin(Vue) {
   Vue.prototype.$mount = function (el) {
     const vm = this;
     const options = vm.$options;
-    console.log(options)
     el = document.querySelector(el);
     //模板转换成渲染函数
     if (!options.render) {

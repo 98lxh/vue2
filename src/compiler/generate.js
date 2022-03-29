@@ -1,4 +1,5 @@
 function gen(node) {
+
   if (node.type === 1) {
     //元素节点
     return generate(node)
@@ -10,7 +11,7 @@ function gen(node) {
       //文本的结束位置
       const textEndIndex = text.indexOf("{{")
 
-      if(textEndIndex === -1){
+      if (textEndIndex === -1) {
         return `_v("${text}")`
       }
 
@@ -28,6 +29,8 @@ function gen(node) {
   }
 }
 
+
+
 function genChildren(el) {
   const children = el.children;
   if (children && children.length > 0) {
@@ -36,6 +39,7 @@ function genChildren(el) {
     return false
   }
 }
+
 
 
 export function generate(el) {
