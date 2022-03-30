@@ -477,6 +477,15 @@
 
 
     while (html) {
+      //解析注释节点
+      var nodesStart = html.indexOf('<!--');
+
+      if (nodesStart === 0) {
+        var nodesEnd = html.indexOf('-->');
+        advance(nodesEnd + 3);
+        continue;
+      }
+
       var textEnd = html.indexOf('<'); //解析到开头
 
       if (textEnd === 0) {

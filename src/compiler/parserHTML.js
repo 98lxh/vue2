@@ -207,6 +207,16 @@ export function parserHTML(html) {
 
   //解析的内容如果存在一直解析
   while (html) {
+
+    //解析注释节点
+    let nodesStart = html.indexOf('<!--');
+    if (nodesStart === 0) {
+      let nodesEnd = html.indexOf('-->');
+      advance(nodesEnd + 3)
+      continue
+    }
+
+
     let textEnd = html.indexOf('<');
     //解析到开头
     if (textEnd === 0) {
