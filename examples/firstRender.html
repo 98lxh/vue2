@@ -6,11 +6,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
 </head>
+<style>
+  .item{
+    color:red
+  }
+</style>
 <body>
-  <div id="app" style="background: black;">
-    <li style="color:white">hello {{word}}</li>
-    <li style="color:white">hello {{word}}</li>
-    <li style="color:white">hello {{word}}</li>
+  <div id="app" style="background:black">
+    <li class="item">hello{{word}}</li>
+    <li class="item">hello{{word}}</li>
+    <li class="item">hello{{word}}</li>
   </div>
   <script src="/dist/umd/vue.js"></script>
   <script>

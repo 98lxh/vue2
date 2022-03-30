@@ -190,7 +190,7 @@ function updatePropertys(vnode, oldProps) {
         el.style[styleName] = newProps.style[styleName]
       }
     } else if (key === 'class') {
-      el.class = newProps.class
+      el.className = newProps.class
     } else if (key === 'vModel') {
       setVModel(el.tagName.toLowerCase(), newProps['vModel'].value, vnode)
     } else if (key === 'vOn') {

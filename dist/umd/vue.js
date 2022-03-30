@@ -350,6 +350,7 @@
       attrs = attrs.filter(function (a) {
         return a;
       });
+      console.log(attrs);
       var attrStr = "";
 
       for (var i = 0; i < attrs.length; i++) {
@@ -415,6 +416,7 @@
 
         if (styleEndIndex !== -1) {
           styleStr = styleStr.slice(0, styleEndIndex);
+          console.log(styleStr);
           attrStr = attrStr.split(styleStr).join("");
         }
       }
@@ -1212,7 +1214,7 @@
           el.style[styleName] = newProps.style[styleName];
         }
       } else if (_key2 === 'class') {
-        el["class"] = newProps["class"];
+        el.className = newProps["class"];
       } else if (_key2 === 'vModel') {
         setVModel(el.tagName.toLowerCase(), newProps['vModel'].value, vnode);
       } else if (_key2 === 'vOn') {
@@ -1490,7 +1492,7 @@
   }
 
   function isReservedTag(tagName) {
-    var reservedTag = 'div,p,input,select,button,option,br';
+    var reservedTag = 'div,p,input,select,button,option,br,li';
     var has = {};
     reservedTag.split(",").forEach(function (tag) {
       has[tag] = true;
