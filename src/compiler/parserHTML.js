@@ -109,7 +109,6 @@ export function parserHTML(html) {
   //解析节点属性生成节点属性的字符串
   function parserAttrs(attrs) {
     attrs = attrs.filter(a => a)
-    console.log(attrs)
     let attrStr = "";
     for (let i = 0; i < attrs.length; i++) {
       const attr = attrs[i];
@@ -153,12 +152,11 @@ export function parserHTML(html) {
     let styleStr;
     if (styleStartIdx !== -1) {
       //style开始到结尾的字符串
-      styleStr = attrStr.slice(styleStartIdx, attrStr.length - 1)
-      const styleEndIndex = styleStr.indexOf(" ")
+      styleStr = attrStr.slice(styleStartIdx, attrStr.length)
+      const styleEndIndex = styleStr.lastIndexOf('"')
       if (styleEndIndex !== -1) {
         styleStr = styleStr.slice(0, styleEndIndex)
-        console.log(styleStr)
-        attrStr = attrStr.split(styleStr).join("")
+        attrStr = attrStr.split(styleStr + '"').join("")
       }
     }
 

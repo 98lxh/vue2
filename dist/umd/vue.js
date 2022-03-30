@@ -350,7 +350,6 @@
       attrs = attrs.filter(function (a) {
         return a;
       });
-      console.log(attrs);
       var attrStr = "";
 
       for (var i = 0; i < attrs.length; i++) {
@@ -411,13 +410,12 @@
 
       if (styleStartIdx !== -1) {
         //style开始到结尾的字符串
-        styleStr = attrStr.slice(styleStartIdx, attrStr.length - 1);
-        var styleEndIndex = styleStr.indexOf(" ");
+        styleStr = attrStr.slice(styleStartIdx, attrStr.length);
+        var styleEndIndex = styleStr.lastIndexOf('"');
 
         if (styleEndIndex !== -1) {
           styleStr = styleStr.slice(0, styleEndIndex);
-          console.log(styleStr);
-          attrStr = attrStr.split(styleStr).join("");
+          attrStr = attrStr.split(styleStr + '"').join("");
         }
       }
 
