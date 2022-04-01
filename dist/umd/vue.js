@@ -1499,7 +1499,7 @@
   }
 
   function isReservedTag(tagName) {
-    var reservedTag = 'div,p,input,select,button,option,br,li';
+    var reservedTag = 'div,p,input,select,button,option,br,li,span,ul';
     var has = {};
     reservedTag.split(",").forEach(function (tag) {
       has[tag] = true;
